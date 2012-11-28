@@ -4,6 +4,31 @@ ext = require('./extensions')
 
 Module = ext.Module
 
+class Conversions
+  bs = (i,len=8,pad="0")->
+    s = i.toString 2
+    amt = len - (s.length % len)
+    s = pad+s for i in [1..amt]
+    s
+
+  @utf2int = (chars)->
+    bstr = ""
+    for i in [ 0..chars.length-1 ]
+      bstr += bs chars.charCodeAt(i)
+    parseInt bstr, 2
+
+  @int2utf = (int)->
+    bstr = bs int
+    bytes = Math.ceil( bstr.length / 8 )
+    utf = ""
+    for idx in [0..(bytes-1)]
+      chunk = bstr.slice (idx*8), (idx*8)+8 # 8 == byte
+      utf += String.fromCharCode parseInt( chunk, 2 )
+
+    utf
+
+
+
 class CompressedKeys extends Module
   @include _
   constructor: (@named)->
@@ -34,7 +59,7 @@ class TinySocketApi extends Module
   clientListen: (sock)=>  @setSocket sock, @clientApi
 
 exports.TinySocketApi = TinySocketApi
-
+exports.Conversions = Conversions
 
 
 # so we want to use smaller WS messages, which are always utf-8 strings.

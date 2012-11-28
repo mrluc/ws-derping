@@ -62,11 +62,37 @@ world = new sim.World
 # efficiency, and we were using base 36 ...
 #
 base64 = require './base64'
-stringTo255Int = (chars)->
+
+utf8ToInt = (bytePrecision)->
+  (s)->
+    chars = s.slice 0, bytePrecision
+    rest = s.slice bytePrecision, s.length
+    bstr = ""
+    bstr.push(chars.charCodeAt i ) for i in [0..chars.length-1]
+    console.log bstr
+
+  # huh ... if it really does send/specify utf-8, then we ought
+  # to be safe doing this. But maybe roll our own - 255 to base 2
+  #   yeah, man, people send forms w/special chars etc. WS/transport
+  #   is UTF-8, so it ought to be good, as utf doesn't have
+  #   non-printing ... guess we'll find out if that's not true...
+  # huh ... duh ... yes, that IS how to do it, concat each 255 to
+  #  the next, just figure out order of ops.
+  #    1. grab charcode from char
+  #    2. turn it into binary string
+  #    3. turn it into int
+  # and otherwise,
+  #    1. turn int into binary string
+  #    2. grab 8-char chunks from the left - right-pad final w/0s
+  #    3. turn each into a charcode appended to string.
+intToUtf8 = ()->
+
+
+
 
 s2int = (maxN)->
   (s)->
-    numChars = Math.ceil( uptoN / 36 )
+    numChars = Math.ceil( maxN / 36 )
     val = parseInt s.slice( 0, numChars ), 36
     rest = s.slice( numChars, s.length)
     [ val, rest ]
@@ -84,12 +110,9 @@ unpackCall = (argConsumers..., fnToCallWithArgs)->
 
 # boy - do the strings we send survive with all 255 char codes?
 #  hmmm.
-unpacker = unpackCall
-  s2int(1200), (i)-> throw "NO WAY. AWESOME ---> #{i}"
+unpacker = unpackCall s2int(1200), (i)-> console.log "NO WAY. AWESOME ---> #{i}"
 
 unpacker "af"
-
-
 # so at least fn sig, we want to get down to 1 char.
 #  surely.
 # then after that, it's a mapping fn.

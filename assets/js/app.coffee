@@ -4,10 +4,55 @@
 
 w = window
 
+puts = (args...) -> console.log args...
+
+# hmmmm ... the whole 255 values aren't available?
+#  or maybe it's condensing some of the values, as some
+#  (apparently) like charcode 1 ... get vanished?
+#w.utf8ToInt = (bytePrecision)->
+#  (s)->
+#    chars = s.slice 0, bytes # AHA. Here, pure conv.
+#    rest = s.slice bytes, s.length
+#    bstr = ""
+#    for i in [0..chars.length-1]
+#      chunk = chars.charCodeAt(i).toString(2)
+#      puts "omglol"
+#      puts [i, chars[i], chunk]
+#      bstr += chunk
+#    console.log bstr
+
+# byte string
+
+#w.utf2int = (chars)->
+#  bstr = ""
+#  for i in [ 0..chars.length-1 ]
+#    bstr += bs chars.charCodeAt(i)
+
+#  parseInt bstr, 2
+
+#w.int2utf = (int)->
+#  bstr = bs int
+#  bytes = Math.ceil( bstr.length / 8 )
+#  utf = ""
+#  for idx in [0..(bytes-1)]
+#    chunk = bstr.slice (idx*8), (idx*8)+8 # 8 == byte
+#    utf += String.fromCharCode parseInt( chunk, 2 )
+
+#  utf
+
 w._ = _ = require 'underscore'
 w.Backbone = require 'backbone'
 w.socket = io.connect 'http://localhost:4001'
 w.hammer = require './hammer'
+
+
+comm = require '../../comm'
+cnv = comm.Conversions
+_.extend window, cnv
+
+# ERROR CASE:
+puts utf2int(int2utf(12545))
+
 
 everyNs = (seconds, fn)-> _.debounce fn, seconds*1000
 every5s = (fn)-> everyNs 5, fn
@@ -21,7 +66,7 @@ socket.on 'gameState', (data)->
 # TODO
 #  okay, we have a running simulation. Congrats.
 
-puts = (args...) -> console.log args...
+
 
 # hah. recurring would be prettier, but it's a circular
 #  linked list, so meh
@@ -33,6 +78,7 @@ _most = (original, key, fn) ->
     break if not next or next is original # could still recur
     cur = next
 
+w.base64 = require '../../base64'
 sim = require '../../sim'
 w.Box2D = sim.Box2D
 _.extend w, Box2D...
