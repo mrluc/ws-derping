@@ -1,0 +1,17 @@
+
+
+<html>
+  <body>
+    <script src="/thing.js"></script>
+    <script src="/box2d.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io.connect('http://localhost:4000');
+      socket.on('news', function (data) {
+      console.log(data);
+      socket.emit('my other event', { my: 'data' });
+      });
+      
+    </script>
+    
+</html>
