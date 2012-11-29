@@ -5,6 +5,7 @@
 w = window
 puts = (args...) -> console.log args...
 
+w.bases = require 'bases'
 w._ = _ = require 'underscore'
 w.Backbone = require 'backbone'
 w.socket = io.connect 'http://localhost:4001'
@@ -25,8 +26,6 @@ socket.on 'gameState', (data)->
 
 # TODO
 #  okay, we have a running simulation. Congrats.
-
-
 
 # hah. recurring would be prettier, but it's a circular
 #  linked list, so meh

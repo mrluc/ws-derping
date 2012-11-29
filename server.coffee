@@ -1,7 +1,6 @@
-lg = (s...)->console.log s...
+lg = puts = (s...)->console.log s...
 
 connect = require 'connect'
-uglify = require 'uglify-js'
 express = require 'express'
 app = express()
 server = require('http').createServer(app)
@@ -13,35 +12,32 @@ io = require('socket.io').listen server,
 env = 'development'
 debug = yes
 
-lg 'Configuring sass'
-#app.use require('connect-assets')() #using browserify + node-sass atm
+lg 'Configuring css - node-sass middleware'
 sass =
   src: "#{__dirname}/assets/css"
   dest: "#{__dirname}/public"
   debug: debug
 app.use require('node-sass').middleware sass
 
-lg 'Configure Express - public dir, view engine'
+lg 'Configure views - static public; view engine'
 app.use express.static "#{__dirname}/public"
 app.set 'view engine', 'jade'
 app.engine 'jade', (require 'consolidate').jade
 
-# stick browserify here:
-
+lg 'Configure js - browserify with entry of client.coffee'
 browserify = require 'browserify'
 bundle = browserify
-  entry: "#{__dirname}/assets/js/app.coffee"
+  entry: "#{__dirname}/assets/js/client.coffee"
   debug: debug
   mount: "/bundle.js"
   watch: yes
-
 app.use bundle
 
-
-# SPA-Style - one route, one view, static/cacheable
+lg 'Configure routes - one route, one view'
 app.get '/', (req, res) -> res.render 'index'
 
 comm = require './comm'
+cnv = comm.Conversions
 sim = require './sim'
 world = new sim.World
 
@@ -85,34 +81,46 @@ utf8ToInt = (bytePrecision)->
   #    1. turn int into binary string
   #    2. grab 8-char chunks from the left - right-pad final w/0s
   #    3. turn each into a charcode appended to string.
+
 intToUtf8 = ()->
-
-
-
-
-s2int = (maxN)->
+s2int = (bytes)->
   (s)->
     numChars = Math.ceil( maxN / 36 )
     val = parseInt s.slice( 0, numChars ), 36
     rest = s.slice( numChars, s.length)
     [ val, rest ]
 
-unpackCall = (argConsumers..., fnToCallWithArgs)->
+unpackCall = (argConsumers..., fnToCallWithArgs = puts)->
 
   (s)->
+    puts "A string -- #{s} -- that is #{s.length} chars long"
     args=[]
     for argFn in argConsumers
       [val, rest] = argFn s
+      puts "Consumed #{val}, rest: #{rest}"
       s = rest
       args.push val
-
+    puts "Now going to call with args: #{args}"
     fnToCallWithArgs( args... )
 
 # boy - do the strings we send survive with all 255 char codes?
 #  hmmm.
-unpacker = unpackCall s2int(1200), (i)-> console.log "NO WAY. AWESOME ---> #{i}"
+utfIntConsumer = (bytes)->
+  (s)->
+    chars = s.slice( 0, bytes )
+    puts "string: #{s}.going to convert #{chars}, which is #{chars.length} long"
+    val = cnv.utf2int chars
+    rest = s.slice( bytes, s.length )
+    [ val, rest ]
 
-unpacker "af"
+unpacker = unpackCall utfIntConsumer(3), (i)-> console.log "NO WAY. AWESOME ---> #{i}"
+
+puts cnv.utf2int cnv.int2utf 123545
+puts utfIntConsumer(3) cnv.int2utf 123545
+
+unpacker cnv.int2utf(123545) # consume only 2 -- TODO handle over-consump
+
+
 # so at least fn sig, we want to get down to 1 char.
 #  surely.
 # then after that, it's a mapping fn.

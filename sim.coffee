@@ -5,7 +5,7 @@ Backbone = require 'backbone'
 lib.Box2D = b = Box2D = require 'box2dnode'
 
 class lib.PhysicalSimulation
-  constructor: () ->
+  constructor: (@each_tick) ->
     @gravity = new b.b2Vec2(0, -10)
     @world = new b.b2World @gravity, doSleep = no
 
@@ -38,6 +38,7 @@ class lib.PhysicalSimulation
       position = body.GetPosition()
       angle = body.GetAngle()
       console.log "#{i} #{position.x} - #{position.y}"
+      @each_tick position.x, position.y if @each_tick
 
     # TODO: class this for node/browser
     #z = setInterval(eachStep, timeStep);

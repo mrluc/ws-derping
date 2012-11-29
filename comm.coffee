@@ -2,9 +2,37 @@
 _ = require 'underscore'
 ext = require('./extensions')
 
+# awwwwww yeah
+
 Module = ext.Module
 
-class Conversions
+class Alphabet extends Module
+  @include require 'bases'
+  constructor: (@byPosition)->
+    @base = @byPosition.length
+    @byLetter = {}
+    for s, i in @byPosition.split ""
+      @byLetter[s] = i
+  to_s: (i)=>
+    @toAlphabet i, @byPosition
+  to_i: (s)=>
+
+    digits = s.split ""
+    numdigits = digits.length
+    num = 0
+
+    for letter, i in digits
+      num += Math.pow( @byLetter[letter], numdigits - i )
+    num
+
+class Conversions extends Module
+
+  @extend require 'bases'
+
+  @e91 = new Alphabet "~`!1@2#3$4%5^6&7*8(9)0_-+={[}]|:;<,>.?/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+  @toE91 = (i) -> @toAlphabet i, @e91
+
   bs = (i,len=8,pad="0")->
     s = i.toString 2
     amt = len - (s.length % len)
@@ -26,7 +54,7 @@ class Conversions
       utf += String.fromCharCode parseInt( chunk, 2 )
 
     utf
-
+  @testUtfInts = -> 12545 is @utf2int int2utf 12545
 
 
 class CompressedKeys extends Module
