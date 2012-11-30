@@ -109,16 +109,16 @@ utfIntConsumer = (bytes)->
   (s)->
     chars = s.slice( 0, bytes )
     puts "string: #{s}.going to convert #{chars}, which is #{chars.length} long"
-    val = cnv.utf2int chars
+    val = cnv.to_i chars
     rest = s.slice( bytes, s.length )
     [ val, rest ]
 
 unpacker = unpackCall utfIntConsumer(3), (i)-> console.log "NO WAY. AWESOME ---> #{i}"
 
-puts cnv.utf2int cnv.int2utf 123545
-puts utfIntConsumer(3) cnv.int2utf 123545
+puts cnv.to_i cnv.to_s 123545
+#puts utfIntConsumer(3) cnv.int2utf 123545
 
-unpacker cnv.int2utf(123545) # consume only 2 -- TODO handle over-consump
+unpacker cnv.to_s 1235 # consume only 2 -- TODO handle over-consump
 
 
 # so at least fn sig, we want to get down to 1 char.
@@ -129,6 +129,10 @@ emap = new comm.TinySocketApi
     consumePlayerActions: (s)->
 
   clientListens:
+    # player movement events are the big thing
+    #  to broadcast - or at least the actual new
+    #  positions/directions w/the action taken.
+    # also objects that have recently collided w/players
     gameState: (s)->
       console.log "gS: #{s}"
 
@@ -151,7 +155,7 @@ io.sockets.on 'connection', (socket) ->
   #  if a client gets out of sync.
   # BENEFIT: entity position, other updates can be tiny!
   sayGameState = ->
-    socket.emit 'gameState', "sflmsdflkmsdfl;kmasdflk;masdf"
+    socket.emit 'g', "sflmsdflkmsdfl;kmasdflk;masdf"
   setInterval sayGameState, 2000
 
   # TODO: all object keys should be tiny as well.

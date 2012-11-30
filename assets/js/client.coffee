@@ -20,7 +20,7 @@ every5s = (fn)-> everyNs 5, fn
 log5s = every5s (s)-> console.log s
 log5s = _.debounce ((s)-> console.log s), 5000
 
-socket.on 'gameState', (data)->
+socket.on 'g', (data)->
   log5s data
   socket.emit 'pa', my:'data'
 
@@ -28,6 +28,7 @@ socket.on 'gameState', (data)->
 #  okay, we have a running simulation. Congrats.
 
 # hah. recurring would be prettier, but it's a circular
+#
 #  linked list, so meh
 _most = (original, key, fn) ->
   [cur, next] = [original, no]

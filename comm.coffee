@@ -16,46 +16,20 @@ class Alphabet extends Module
   to_s: (i)=>
     @toAlphabet i, @byPosition
   to_i: (s)=>
-
     digits = s.split ""
-    numdigits = digits.length
-    num = 0
-
-    for letter, i in digits
-      num += Math.pow( @byLetter[letter], numdigits - i )
+    [len, num] = [digits.length, 0]
+    num += Math.pow(@byLetter[s], len-i) for s, i in digits
     num
 
 class Conversions extends Module
-
-  @extend require 'bases'
-
-  @e91 = new Alphabet "~`!1@2#3$4%5^6&7*8(9)0_-+={[}]|:;<,>.?/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-  @toE91 = (i) -> @toAlphabet i, @e91
-
-  bs = (i,len=8,pad="0")->
-    s = i.toString 2
-    amt = len - (s.length % len)
-    s = pad+s for i in [1..amt]
-    s
-
-  @utf2int = (chars)->
-    bstr = ""
-    for i in [ 0..chars.length-1 ]
-      bstr += bs chars.charCodeAt(i)
-    parseInt bstr, 2
-
-  @int2utf = (int)->
-    bstr = bs int
-    bytes = Math.ceil( bstr.length / 8 )
-    utf = ""
-    for idx in [0..(bytes-1)]
-      chunk = bstr.slice (idx*8), (idx*8)+8 # 8 == byte
-      utf += String.fromCharCode parseInt( chunk, 2 )
-
-    utf
-  @testUtfInts = -> 12545 is @utf2int int2utf 12545
-
+  @include require 'bases'
+  @e92 = new Alphabet [
+    "~`!1@2#3$4%5^6&7*8(9)0"
+    " _-+={[}]|:;<,>.?/"
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  ].join ''
+  {@to_s, @to_i} = @e92
 
 class CompressedKeys extends Module
   @include _
@@ -88,7 +62,7 @@ class TinySocketApi extends Module
 
 exports.TinySocketApi = TinySocketApi
 exports.Conversions = Conversions
-
+exports.Alphabet = Alphabet
 
 # so we want to use smaller WS messages, which are always utf-8 strings.
 #
