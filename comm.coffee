@@ -3,6 +3,18 @@ _ = require 'underscore'
 ext = require('./extensions')
 
 # awwwwww yeah
+#
+# TODO: write some more dream code -- we've got
+#  actual conversion code, so now it's time
+#  to go back to TinySocketApi and figure out,
+#  what's our "dream code"; ideally, how should
+#  it work?
+#
+# Hmmm. Maybe start hooking up the reporting of
+#  the position of a body in sim, simplest thing poss,
+#  maybe not even using and then
+#  hook up some 'player actions', and the process
+#  of doing that will guide dev.
 
 Module = ext.Module
 
@@ -30,6 +42,8 @@ class Conversions extends Module
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   ].join ''
   {@to_s, @to_i} = @e92
+
+
 
 class CompressedKeys extends Module
   @include _
@@ -60,10 +74,30 @@ class TinySocketApi extends Module
   serverListen: (sock)=>  @setSocket sock, @serverApi
   clientListen: (sock)=>  @setSocket sock, @clientApi
 
+class CallUnpacker extends Module
+
+
 exports.TinySocketApi = TinySocketApi
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 
+
+# THOUGHTS ON TINY APIS:
+# To build actual endpoint functions, need
+#
+# 1. Functions that return parsed vals (ints, strs)
+# 2. The fn that knits them together into a call:
+#    something like:
+#
+#  unpackCall player.do_something,
+#    s2bImpulseVec(2,2)
+#
+#  unpackCall would give us the function that consumes
+#  those portions of the string - so the return of the
+#  _conversion_ fns needs to be multiple: [ val, rest ].
+
+
+#-----------------
 # so we want to use smaller WS messages, which are always utf-8 strings.
 #
 # using json in utf-8 strings is so wasteful it makes me want to cry ... but

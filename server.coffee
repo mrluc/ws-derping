@@ -41,56 +41,8 @@ cnv = comm.Conversions
 sim = require './sim'
 world = new sim.World
 
-# NEEDED:
-# 1. Functions that return parsed vals (ints, strs
-#    mostly).
-# 2. The fn that knits them together into a call:
-#    something like:
-#
-#  unpackCall player.do_something,
-#    s2bImpulseVec(2,2),  # makes vector w/2byte precis
-#
-#  unpackCall would give us the function that consumes
-#  those portions of the string - so the return of the
-#  conversion fns needs to be multiple: [ val, rest ].
 
-# no chance. But base64 yes ... jesus that's 1/4th the max
-# efficiency, and we were using base 36 ...
-#
-base64 = require './base64'
-
-utf8ToInt = (bytePrecision)->
-  (s)->
-    chars = s.slice 0, bytePrecision
-    rest = s.slice bytePrecision, s.length
-    bstr = ""
-    bstr.push(chars.charCodeAt i ) for i in [0..chars.length-1]
-    console.log bstr
-
-  # huh ... if it really does send/specify utf-8, then we ought
-  # to be safe doing this. But maybe roll our own - 255 to base 2
-  #   yeah, man, people send forms w/special chars etc. WS/transport
-  #   is UTF-8, so it ought to be good, as utf doesn't have
-  #   non-printing ... guess we'll find out if that's not true...
-  # huh ... duh ... yes, that IS how to do it, concat each 255 to
-  #  the next, just figure out order of ops.
-  #    1. grab charcode from char
-  #    2. turn it into binary string
-  #    3. turn it into int
-  # and otherwise,
-  #    1. turn int into binary string
-  #    2. grab 8-char chunks from the left - right-pad final w/0s
-  #    3. turn each into a charcode appended to string.
-
-intToUtf8 = ()->
-s2int = (bytes)->
-  (s)->
-    numChars = Math.ceil( maxN / 36 )
-    val = parseInt s.slice( 0, numChars ), 36
-    rest = s.slice( numChars, s.length)
-    [ val, rest ]
-
-unpackCall = (argConsumers..., fnToCallWithArgs = puts)->
+callUnpacker = (argConsumers..., fnToCallWithArgs = puts)->
 
   (s)->
     puts "A string -- #{s} -- that is #{s.length} chars long"
@@ -113,7 +65,7 @@ utfIntConsumer = (bytes)->
     rest = s.slice( bytes, s.length )
     [ val, rest ]
 
-unpacker = unpackCall utfIntConsumer(3), (i)-> console.log "NO WAY. AWESOME ---> #{i}"
+unpacker = callUnpacker utfIntConsumer(3), (i)-> console.log "NO WAY. AWESOME ---> #{i}"
 
 puts cnv.to_i cnv.to_s 123545
 #puts utfIntConsumer(3) cnv.int2utf 123545
