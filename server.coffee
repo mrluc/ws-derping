@@ -42,36 +42,36 @@ sim = require './sim'
 world = new sim.World
 
 
-callUnpacker = (argConsumers..., fnToCallWithArgs = puts)->
+#callUnpacker = (argConsumers..., fnToCallWithArgs = puts)->
+#  (s)->
+#    puts "A string -- #{s} -- that is #{s.length} chars long"
+#    args=[]
+#    for argFn in argConsumers
+#      [val, rest] = argFn s
+#      puts "Consumed #{val}, rest: #{rest}"
+#      s = rest
+#      args.push val
+#    puts "Now going to call with args: #{args}"
+#    fnToCallWithArgs( args... )
 
-  (s)->
-    puts "A string -- #{s} -- that is #{s.length} chars long"
-    args=[]
-    for argFn in argConsumers
-      [val, rest] = argFn s
-      puts "Consumed #{val}, rest: #{rest}"
-      s = rest
-      args.push val
-    puts "Now going to call with args: #{args}"
-    fnToCallWithArgs( args... )
+#utfIntConsumer = (bytes)->
+#  (s)->
+#    chars = s.slice( 0, bytes )
+#    puts "string: #{s}.going to convert #{chars},
+#      which is #{chars.length} long"
+#    val = cnv.to_i chars
+#    rest = s.slice( bytes, s.length )
+#    [ val, rest ]
 
-# boy - do the strings we send survive with all 255 char codes?
-#  hmmm.
-utfIntConsumer = (bytes)->
-  (s)->
-    chars = s.slice( 0, bytes )
-    puts "string: #{s}.going to convert #{chars}, which is #{chars.length} long"
-    val = cnv.to_i chars
-    rest = s.slice( bytes, s.length )
-    [ val, rest ]
-
-unpacker = callUnpacker utfIntConsumer(3), (i)-> console.log "NO WAY. AWESOME ---> #{i}"
+#unpacker = cnv.PackedCalls.unpacker utfIntConsumer(3), (i)->
+#  console.log "NO WAY. AWESOME ---> #{i}"
 
 puts cnv.to_i cnv.to_s 123545
 #puts utfIntConsumer(3) cnv.int2utf 123545
 
-unpacker cnv.to_s 1235 # consume only 2 -- TODO handle over-consump
-
+puts "TESTING: "
+comm.test()
+process.exit()
 
 # so at least fn sig, we want to get down to 1 char.
 #  surely.

@@ -13,7 +13,7 @@ w.hammer = require './hammer'
 
 comm = require '../../comm'
 cnv = comm.Conversions
-_.extend window, cnv   # ERROR CASE: puts utf2int(int2utf(12545))
+_.extend window, cnv
 
 everyNs = (seconds, fn)-> _.debounce fn, seconds*1000
 every5s = (fn)-> everyNs 5, fn
@@ -24,16 +24,12 @@ socket.on 'g', (data)->
   log5s data
   socket.emit 'pa', my:'data'
 
-# TODO
-#  okay, we have a running simulation. Congrats.
-
 # hah. recurring would be prettier, but it's a circular
-#
 #  linked list, so meh
 _most = (original, key, fn) ->
   [cur, next] = [original, no]
   while cur
-    fn cur #
+    fn cur
     next = cur[key]
     break if not next or next is original # could still recur
     cur = next

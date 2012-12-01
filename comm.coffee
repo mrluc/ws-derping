@@ -1,7 +1,7 @@
 
 _ = require 'underscore'
 ext = require('./extensions')
-
+lg = puts = (s...)->console.log s...
 # awwwwww yeah
 #
 # TODO: write some more dream code -- we've got
@@ -27,10 +27,28 @@ class Alphabet extends Module
       @byLetter[s] = i
   to_s: (i)=>
     @toAlphabet i, @byPosition
-  to_i: (s)=>
-    digits = s.split ""
+  to_i: (str)=>
+    digits = str.split("") # .reverse()
     [len, num] = [digits.length, 0]
-    num += Math.pow(@byLetter[s], len-i) for s, i in digits
+    puts "Converting #{str}, with #{len} digits."
+    for s, i in digits
+
+      int = @byLetter[s]
+      puts "Okay, see a digit with val: #{int}"
+      puts "And it's at digit multiplier: " + (len-i-1)
+      multi = Math.pow @base, (len - i - 1)
+
+      if multi > 0
+        puts "Going to mul #{int} by: #{multi}"
+        int = int * multi
+      else
+        puts "Not going to multiply, just adding #{int} to #{num}"
+        1
+
+      num += int
+
+      # p = @base * @byLetter[s]
+      # num += p=Math.pow(l=@byLetter[s], len-i)
     num
 
 class Conversions extends Module
@@ -40,7 +58,7 @@ class Conversions extends Module
     " _-+={[}]|:;<,>.?/"
     "abcdefghijklmnopqrstuvwxyz"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  ].join ''
+  ].join('')
   {@to_s, @to_i} = @e92
 
 
@@ -62,6 +80,25 @@ class CompressedKeys extends Module
   nameForTiny: (tiny)=> @findParallelKey tiny, @tiny, @named
   tinyForName: (name)=> @findParallelKey name, @named, @tiny
 
+
+class PackedCalls extends Module
+  # okay -- now we still need fns that consume
+  #  just a specific number of bytes from a str.
+  @unpacker = (argConsumers..., fnToCallWithArgs = puts)->
+    (s)->
+      puts "A string -- #{s} -- that is #{s.length} chars long"
+      args=[]
+      for argFn in argConsumers
+        [val, rest] = argFn s
+        puts "Consumed #{val}, rest: #{rest}"
+        s = rest
+        args.push val
+      puts "Now going to call with args: #{args}"
+      fnToCallWithArgs( args... )
+
+# We've compressed the fn names called in socket,
+# now we're working on packing/unpacking the
+# values passed them.
 class TinySocketApi extends Module
   @include _
   constructor: ({@serverListens, @clientListens})->
@@ -74,12 +111,22 @@ class TinySocketApi extends Module
   serverListen: (sock)=>  @setSocket sock, @serverApi
   clientListen: (sock)=>  @setSocket sock, @clientApi
 
-class CallUnpacker extends Module
-
 
 exports.TinySocketApi = TinySocketApi
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
+
+exports.test = ->
+  cnv = Conversions
+
+  for i in [10, 91, 200, 2000, 4123, 6540, 12000]
+
+    s = cnv.to_s( i )
+    puts "CONVERTING: #{ i }"
+    puts s
+    puts "conversion works: -- #{ (tot=cnv.to_i( s )) is i }"
+    puts "          = #{ tot }"
+
 
 
 # THOUGHTS ON TINY APIS:
