@@ -54,58 +54,31 @@ world = new sim.World
 #    puts "Now going to call with args: #{args}"
 #    fnToCallWithArgs( args... )
 
-#utfIntConsumer = (bytes)->
-#  (s)->
-#    chars = s.slice( 0, bytes )
-#    puts "string: #{s}.going to convert #{chars},
-#      which is #{chars.length} long"
-#    val = cnv.to_i chars
-#    rest = s.slice( bytes, s.length )
-#    [ val, rest ]
+utfIntConsumer = (bytes)->
+  (s)->
+    chars = s.slice( 0, bytes )
+    puts "string: #{s}.going to convert #{chars},
+      which is #{chars.length} long"
+    val = cnv.to_i chars
+    rest = s.slice( bytes, s.length )
+    [ val, rest ]
 
-#unpacker = cnv.PackedCalls.unpacker utfIntConsumer(3), (i)->
-#  console.log "NO WAY. AWESOME ---> #{i}"
+# okay -- we need to simulate a
+unpack = comm.PackedCalls.unpacker utfIntConsumer(3), (args...)->
+  lg "NO WAY. AWESOME ARGS ---> "
+  lg JSON.stringify(arg) for arg in args
 
-puts cnv.to_i cnv.to_s 123545
-#puts utfIntConsumer(3) cnv.int2utf 123545
-
-puts "TESTING: "
+unpack cnv.to_s 12345
 comm.test()
-process.exit()
-
-# so at least fn sig, we want to get down to 1 char.
-#  surely.
+# so at least fn sig, we want to get down to 1 char
 # then after that, it's a mapping fn.
-emap = new comm.TinySocketApi
-  serverListens:
-    consumePlayerActions: (s)->
 
-  clientListens:
-    # player movement events are the big thing
-    #  to broadcast - or at least the actual new
-    #  positions/directions w/the action taken.
-    # also objects that have recently collided w/players
-    gameState: (s)->
-      console.log "gS: #{s}"
-
-#throw emap.clientApi
-emap.clientApi.named.gameState('blah')
-
-# For the heck of it: let's start binding to world.player
-# so how would this work? I'd say: users
+gameApi = comm.gameApi
 
 puts = (s)->console.log s
 io.sockets.on 'pa', (data)-> throw "OOOOOOONOOOOOOZ"
 io.sockets.on 'connection', (socket) ->
-  #console.log socket
-  # these sorts of fns would likely only be called on a fixed
-  #  schedule, not in response to user action
-  # ack = -> socket.emit 'ack', 1
-  # TODO: separate out the entity map from the each-tick
-  #  updates. Ie, number of players and their ids, that should
-  #  come down the wire very rarely, and can be requested
-  #  if a client gets out of sync.
-  # BENEFIT: entity position, other updates can be tiny!
+
   sayGameState = ->
     socket.emit 'g', "sflmsdflkmsdfl;kmasdflk;masdf"
   setInterval sayGameState, 2000
@@ -116,6 +89,8 @@ io.sockets.on 'connection', (socket) ->
     userActions: [],
     state: {}
   }
+
+  gameApi.serverListen( socket )
 
   socket.on 'pa', (data)->
     puts "Yaaaargh I consume player action, #{data}!"

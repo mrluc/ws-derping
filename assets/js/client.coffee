@@ -21,8 +21,12 @@ log5s = every5s (s)-> console.log s
 log5s = _.debounce ((s)-> console.log s), 5000
 
 socket.on 'g', (data)->
-  log5s data
+  console.log data
   socket.emit 'pa', my:'data'
+
+gameApi = comm.gameApi
+
+gameApi.clientListen socket
 
 # hah. recurring would be prettier, but it's a circular
 #  linked list, so meh

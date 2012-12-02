@@ -25,30 +25,22 @@ class Alphabet extends Module
     @byLetter = {}
     for s, i in @byPosition.split ""
       @byLetter[s] = i
-  to_s: (i)=>
-    @toAlphabet i, @byPosition
-  to_i: (str)=>
-    digits = str.split("") # .reverse()
+    @padChar = @to_s 0
+  pad: (s, len)=>
+    s = @padChar + s for i in [1..(len-s.length)]
+    s
+  to_s: (i,padNumChars=no)=>
+    s = @toAlphabet i, @byPosition
+    if padNumChars then @pad(s,padNumChars) else s
+
+  to_i: (str,padTo=no)=>
+    digits = str.split ""
     [len, num] = [digits.length, 0]
-    puts "Converting #{str}, with #{len} digits."
     for s, i in digits
-
       int = @byLetter[s]
-      puts "Okay, see a digit with val: #{int}"
-      puts "And it's at digit multiplier: " + (len-i-1)
       multi = Math.pow @base, (len - i - 1)
-
-      if multi > 0
-        puts "Going to mul #{int} by: #{multi}"
-        int = int * multi
-      else
-        puts "Not going to multiply, just adding #{int} to #{num}"
-        1
-
+      int = int * multi if multi > 0
       num += int
-
-      # p = @base * @byLetter[s]
-      # num += p=Math.pow(l=@byLetter[s], len-i)
     num
 
 class Conversions extends Module
@@ -60,8 +52,6 @@ class Conversions extends Module
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   ].join('')
   {@to_s, @to_i} = @e92
-
-
 
 class CompressedKeys extends Module
   @include _
@@ -82,51 +72,104 @@ class CompressedKeys extends Module
 
 
 class PackedCalls extends Module
-  # okay -- now we still need fns that consume
-  #  just a specific number of bytes from a str.
+
+  #HEY. With approp. argsConsumers,
+  # couldn't this work for encoding as well? Seems
+  # general enough ...
   @unpacker = (argConsumers..., fnToCallWithArgs = puts)->
+
     (s)->
-      puts "A string -- #{s} -- that is #{s.length} chars long"
       args=[]
       for argFn in argConsumers
         [val, rest] = argFn s
-        puts "Consumed #{val}, rest: #{rest}"
         s = rest
         args.push val
-      puts "Now going to call with args: #{args}"
-      fnToCallWithArgs( args... )
-
-# We've compressed the fn names called in socket,
-# now we're working on packing/unpacking the
-# values passed them.
+      fnToCallWithArgs( args..., rest )
+  #@packer = (args)
+# SO NOW: SENDING.
+#  Dream code that works on client and server is sort
+#  of difficult to envisage, plays tricks on ya ...
+#
 class TinySocketApi extends Module
   @include _
   constructor: ({@serverListens, @clientListens})->
     @serverApi = new CompressedKeys @serverListens
     @clientApi = new CompressedKeys @clientListens
 
-  setSocket: (sock, api)->
+  setEmitters: (sock, api)->
+    for fname, cb of api.named
+      evt = api.tiny.findParallelKey fname, api.named, api.tiny
+      sock[ fname ] = (args...)->
+        sock.emit( evt )
+
+  setListeners: (sock, api)->
     sock.on evt, cb for evt, cb of api.tiny
 
-  serverListen: (sock)=>  @setSocket sock, @serverApi
-  clientListen: (sock)=>  @setSocket sock, @clientApi
+  serverListen: (sock)=>
+    @setListeners sock, @serverApi
 
+  clientListen: (sock)=>
+    @setListeners sock, @clientApi
 
+# SAMPLE -- whatever the api ends up being,
+# at least the definition aspect should be shared
+# client/server.
+#
+#   serverListens:
+#     playerAction: unpacker argsfn, (s)-> fn to feed extracted..
+#
+# Now to SEND data over this from the client, client wants
+#
+#  socket.send "`","adflmdsaflmsdaf"
+# via gameApi.client.playerAction("Walked forward")
+#
+# serverListens:
+#   playerAction:
+#     rcv:
+#     send:
+#
+#   YAAAAAAAAAAAAAAAARGH still no firm idea of how
+#   this should all work.
+#
+# Maybe on setup, I say:
+#
+#  gameApi = gameApi.setServer()
+#
+# That hooks up the serverListens.rcv, and the
+# clientListens.sends.
+#
+# ??? Seems legit, we still need @packer in PackedCalls
+#
+exports.gameApi = new TinySocketApi
+  serverListens:
+    playerAction: (s)->
+      console.log "PLAYER ACTION ________ OMG OMG #{ s }"
+  clientListens:
+    gameState: (s)->
+      console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+
+exports.PackedCalls = PackedCalls
 exports.TinySocketApi = TinySocketApi
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 
-exports.test = ->
+exports.test = ()->
+
   cnv = Conversions
-
+  fails = []
   for i in [10, 91, 200, 2000, 4123, 6540, 12000]
-
     s = cnv.to_s( i )
-    puts "CONVERTING: #{ i }"
-    puts s
-    puts "conversion works: -- #{ (tot=cnv.to_i( s )) is i }"
+    puts "CONVERTING: #{ i } -> '#{ s }' -> ?"
+    puts "conversion works: -- #{ yay = (tot=cnv.to_i( s )) is i }"
     puts "          = #{ tot }"
+    fails.push i unless yay
+  puts if fails.length > 0
+    "FAILS: #{fails}"
+  else "SUCCESSES!"
 
+  puts "PADDING OUT A STRING:"
+
+  puts "Padding out to 5 chars: #{cnv.e92.pad 'XXX', 5}"
 
 
 # THOUGHTS ON TINY APIS:
