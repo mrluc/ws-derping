@@ -159,12 +159,15 @@ exports.gameApi = new TinySocketApi
     gameState: (s)->
       console.log "GAME STATE _____ OMG OMG OMG #{ s }"
 
-exports.PackedCalls = PackedCalls
-exports.TinySocketApi = TinySocketApi
+# todo - private
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 
-exports.test = ->
+# public
+exports.PackedCalls = PackedCalls
+exports.TinySocketApi = TinySocketApi
+
+exports.tests = multiArgs: ->
   cnv = Conversions
   pc = PackedCalls
 
@@ -180,14 +183,14 @@ exports.test = ->
 
   lg unpackCall arg
 
-exports.test2 = ()->
-
-
-  unpack = pc.unpacker arg_s2i(5), (args...)->
+, basicArgs: ->
+  cnv = Conversions
+  pc = PackedCalls
+  unpack = pc.unpacker pc.s2i(5), (args...)->
     lg "NO WAY. AWESOME ARGS ---> "
     lg JSON.stringify args[0]
     args[0]
-  repack = pc.unpacker arg_i2s(5), (args...)->
+  repack = pc.unpacker pc.i2s(5), (args...)->
     lg "REPACKED BRAH!!!"
     lg JSON.stringify args[0]
     args[0]
@@ -196,8 +199,7 @@ exports.test2 = ()->
   lg "fried: #{fried}"
   lg refried = unpack fried
 
-exports.oldtest = ()->
-
+, conversions: ->
   cnv = Conversions
   fails = []
   for i in [10, 91, 200, 2000, 4123, 6540, 12000]
@@ -214,6 +216,10 @@ exports.oldtest = ()->
 
   puts "Padding out to 5 chars: #{cnv.e92.pad 'XXX', 5}"
 
+exports.test = ->
+  for name, testFn of exports.tests
+    lg "RUNNING TEST: #{ name }"
+    testFn()
 
 # THOUGHTS ON TINY APIS:
 # To build actual endpoint functions, need
