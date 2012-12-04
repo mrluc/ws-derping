@@ -150,6 +150,9 @@ class TinySocketApi extends Module
 # clientListens.sends.
 #
 # ??? Seems legit, we still need @packer in PackedCalls
+# OKAY, this part is done.
+#
+# Now we can move ahead with implementing "gameApi.setServer()"
 #
 exports.gameApi = new TinySocketApi
   serverListens:
