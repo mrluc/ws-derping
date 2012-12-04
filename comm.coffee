@@ -26,6 +26,9 @@ class Alphabet extends Module
     for s, i in @byPosition.split ""
       @byLetter[s] = i
     @padChar = @to_s 0
+    @replacePad = ///
+      ^#{@padChar}+
+    ///
   pad: (s, len)=>
     s = @padChar + s for i in [1..(len-s.length)]
     s
@@ -35,6 +38,7 @@ class Alphabet extends Module
 
   to_i: (str,padTo=no)=>
     digits = str.split ""
+    str = str.replace @replacePad,"" if padTo
     [len, num] = [digits.length, 0]
     for s, i in digits
       int = @byLetter[s]
@@ -154,6 +158,36 @@ exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 
 exports.test = ()->
+
+  cnv = Conversions
+  pc = PackedCalls
+
+  utfIntConsumer = (bytes)->
+    (s)->
+      chars = s.slice( 0, bytes )
+      puts "string: #{s}.going to convert #{chars},
+        which is #{chars.length} long"
+      val = cnv.to_i chars
+      rest = s.slice( bytes, s.length )
+      [ val, rest ]
+  intUtfConsumer = (bytes)->
+    (rest)->
+      val = cnv.to_s rest.shift(), bytes
+      [ val, rest ]
+
+  unpack = pc.unpacker utfIntConsumer(3), (args...)->
+    lg "NO WAY. AWESOME ARGS ---> "
+    lg JSON.stringify args[0]
+    args[0]
+  repack = pc.unpacker intUtfConsumer(3), (args...)->
+    lg "REPACKED BRAH!!!"
+    lg JSON.stringify args[0]
+    args[0]
+  lg unpack cnv.to_s 12345
+  lg fried = repack [12345]
+  lg refried = unpack cnv.to_s fried
+
+exports.oldtest = ()->
 
   cnv = Conversions
   fails = []

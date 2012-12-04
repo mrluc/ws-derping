@@ -62,16 +62,24 @@ utfIntConsumer = (bytes)->
     val = cnv.to_i chars
     rest = s.slice( bytes, s.length )
     [ val, rest ]
+intUtfConsumer = (bytes)->
+  (s)->
+    chars = s.slice( 0, bytes )
+    puts "string: #{s}.going to convert #{chars},
+      which is #{chars.length} long"
+    val = cnv.to_i chars
+    rest = s.slice( bytes, s.length )
+    [ val, rest ]
 
 # okay -- we need to simulate a
-unpack = comm.PackedCalls.unpacker utfIntConsumer(3), (args...)->
-  lg "NO WAY. AWESOME ARGS ---> "
-  lg JSON.stringify(arg) for arg in args
+#unpack = comm.PackedCalls.unpacker utfIntConsumer(3), (args...)->
+#  lg "NO WAY. AWESOME ARGS ---> "
+#  lg JSON.stringify(arg) for arg in args
 
-unpack cnv.to_s 12345
+#unpack cnv.to_s 12345
 comm.test()
-# so at least fn sig, we want to get down to 1 char
-# then after that, it's a mapping fn.
+
+# TODO: CLIENT LIST --
 
 gameApi = comm.gameApi
 

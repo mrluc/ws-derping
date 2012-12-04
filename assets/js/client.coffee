@@ -11,7 +11,7 @@ w.Backbone = require 'backbone'
 w.socket = io.connect 'http://localhost:4001'
 w.hammer = require './hammer'
 
-comm = require '../../comm'
+window.comm = require '../../comm'
 cnv = comm.Conversions
 _.extend window, cnv
 
