@@ -38,6 +38,7 @@ app.get '/', (req, res) -> res.render 'index'
 
 comm = require './comm'
 cnv = comm.Conversions
+pack = comm.PackedCalls
 sim = require './sim'
 world = new sim.World
 
@@ -54,29 +55,13 @@ world = new sim.World
 #    puts "Now going to call with args: #{args}"
 #    fnToCallWithArgs( args... )
 
-utfIntConsumer = (bytes)->
-  (s)->
-    chars = s.slice( 0, bytes )
-    puts "string: #{s}.going to convert #{chars},
-      which is #{chars.length} long"
-    val = cnv.to_i chars
-    rest = s.slice( bytes, s.length )
-    [ val, rest ]
-intUtfConsumer = (bytes)->
-  (s)->
-    chars = s.slice( 0, bytes )
-    puts "string: #{s}.going to convert #{chars},
-      which is #{chars.length} long"
-    val = cnv.to_i chars
-    rest = s.slice( bytes, s.length )
-    [ val, rest ]
-
 # okay -- we need to simulate a
-#unpack = comm.PackedCalls.unpacker utfIntConsumer(3), (args...)->
-#  lg "NO WAY. AWESOME ARGS ---> "
-#  lg JSON.stringify(arg) for arg in args
+unpack = pack.unpacker pack.s2i(3), (args...)->
+  lg "NO WAY. AWESOME ARGS ---> "
+  lg JSON.stringify(arg) for arg in args
 
-#unpack cnv.to_s 12345
+lg unpack cnv.to_s 12345
+
 comm.test()
 
 # TODO: CLIENT LIST --

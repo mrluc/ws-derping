@@ -76,12 +76,11 @@ class CompressedKeys extends Module
 
 
 class PackedCalls extends Module
-
   #HEY. With approp. argsConsumers,
   # couldn't this work for encoding as well? Seems
   # general enough ...
+  @cnv = exports.Conversions
   @unpacker = (argConsumers..., fnToCallWithArgs = puts)->
-
     (s)->
       args=[]
       for argFn in argConsumers
@@ -89,11 +88,19 @@ class PackedCalls extends Module
         s = rest
         args.push val
       fnToCallWithArgs( args..., rest )
-  #@packer = (args)
-# SO NOW: SENDING.
-#  Dream code that works on client and server is sort
-#  of difficult to envisage, plays tricks on ya ...
-#
+  @s2i = (bytes)->
+    (s)->
+      chars = s.slice 0, bytes
+      val = Conversions.to_i chars
+      rest = s.slice bytes, s.length
+      [ val, rest ]
+
+  @i2s = (bytes)->
+    (rest)->
+      val = Conversions.to_s rest.shift(), bytes
+      [ val, rest ]
+
+
 class TinySocketApi extends Module
   @include _
   constructor: ({@serverListens, @clientListens})->
@@ -157,29 +164,30 @@ exports.TinySocketApi = TinySocketApi
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 
-exports.test = ()->
-
+exports.test = ->
   cnv = Conversions
   pc = PackedCalls
 
-  utfIntConsumer = (bytes)->
-    (s)->
-      chars = s.slice( 0, bytes )
-      puts "string: #{s}.going to convert #{chars},
-        which is #{chars.length} long"
-      val = cnv.to_i chars
-      rest = s.slice( bytes, s.length )
-      [ val, rest ]
-  intUtfConsumer = (bytes)->
-    (rest)->
-      val = cnv.to_s rest.shift(), bytes
-      [ val, rest ]
+  # NOW: multi-args
+  b = 1
+  fn = (a,b)->
+    lg "THEY GAVED MEZ: #{a} and #{b}"
+    lg "a + b == 4? #{(a+b) is 4}"
+  a = cnv.to_s 1, b
+  b = cnv.to_s 3, b
+  arg = a+b
+  unpackCall = pc.unpacker pc.s2i(b), pc.s2i(b), fn
 
-  unpack = pc.unpacker utfIntConsumer(5), (args...)->
+  lg unpackCall arg
+
+exports.test2 = ()->
+
+
+  unpack = pc.unpacker arg_s2i(5), (args...)->
     lg "NO WAY. AWESOME ARGS ---> "
     lg JSON.stringify args[0]
     args[0]
-  repack = pc.unpacker intUtfConsumer(5), (args...)->
+  repack = pc.unpacker arg_i2s(5), (args...)->
     lg "REPACKED BRAH!!!"
     lg JSON.stringify args[0]
     args[0]
