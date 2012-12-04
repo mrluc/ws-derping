@@ -107,6 +107,19 @@ class TinySocketApi extends Module
     @serverApi = new CompressedKeys @serverListens
     @clientApi = new CompressedKeys @clientListens
 
+  # AHA! We started:
+  #  decorating the SOCKET itself. Cool.
+  # So with that decorated, we could doubtless wrap it, ie via
+  #  "player.doThing = => @sock.playerAction 'arg1', 'arg2'"
+  # which should handle the packing, and server the un.
+  #
+  # And with player defined like that -- assuming appropriate hooks/
+  # etc for validating socket ids on the server side -- the client-side
+  # could be similar, just a single player hooked up to a single socket.
+  #
+  # We'll see how well we can do that -- probably end up creating a
+  # mixin HERE for things that want to be Socketable, and use it in
+  # Player
   setEmitters: (sock, api)->
     for fname, cb of api.named
       evt = api.tiny.findParallelKey fname, api.named, api.tiny
@@ -116,31 +129,18 @@ class TinySocketApi extends Module
   setListeners: (sock, api)->
     sock.on evt, cb for evt, cb of api.tiny
 
+  setServer: (sock,api)->
   serverListen: (sock)=>
     @setListeners sock, @serverApi
 
   clientListen: (sock)=>
     @setListeners sock, @clientApi
 
-# SAMPLE -- whatever the api ends up being,
-# at least the definition aspect should be shared
-# client/server.
-#
-#   serverListens:
-#     playerAction: unpacker argsfn, (s)-> fn to feed extracted..
-#
-# Now to SEND data over this from the client, client wants
-#
-#  socket.send "`","adflmdsaflmsdaf"
-# via gameApi.client.playerAction("Walked forward")
 #
 # serverListens:
 #   playerAction:
 #     rcv:
 #     send:
-#
-#   YAAAAAAAAAAAAAAAARGH still no firm idea of how
-#   this should all work.
 #
 # Maybe on setup, I say:
 #
@@ -149,11 +149,9 @@ class TinySocketApi extends Module
 # That hooks up the serverListens.rcv, and the
 # clientListens.sends.
 #
-# ??? Seems legit, we still need @packer in PackedCalls
-# OKAY, this part is done.
-#
-# Now we can move ahead with implementing "gameApi.setServer()"
-#
+
+# huh. Where should we hold onto the sockets?
+#  I think that tinysocketapi should be the place, really.
 exports.gameApi = new TinySocketApi
   serverListens:
     playerAction: (s)->
