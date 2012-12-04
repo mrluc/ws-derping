@@ -30,7 +30,7 @@ class Alphabet extends Module
       ^#{@padChar}+
     ///
   pad: (s, len)=>
-    s = @padChar + s for i in [1..(len-s.length)]
+    s = @padChar + s while s.length < len
     s
   to_s: (i,padNumChars=no)=>
     s = @toAlphabet i, @byPosition
@@ -175,17 +175,18 @@ exports.test = ()->
       val = cnv.to_s rest.shift(), bytes
       [ val, rest ]
 
-  unpack = pc.unpacker utfIntConsumer(3), (args...)->
+  unpack = pc.unpacker utfIntConsumer(5), (args...)->
     lg "NO WAY. AWESOME ARGS ---> "
     lg JSON.stringify args[0]
     args[0]
-  repack = pc.unpacker intUtfConsumer(3), (args...)->
+  repack = pc.unpacker intUtfConsumer(5), (args...)->
     lg "REPACKED BRAH!!!"
     lg JSON.stringify args[0]
     args[0]
   lg unpack cnv.to_s 12345
   lg fried = repack [12345]
-  lg refried = unpack cnv.to_s fried
+  lg "fried: #{fried}"
+  lg refried = unpack fried
 
 exports.oldtest = ()->
 
