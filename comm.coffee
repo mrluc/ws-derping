@@ -129,7 +129,12 @@ class TinySocketApi extends Module
   setListeners: (sock, api)->
     sock.on evt, cb for evt, cb of api.tiny
 
-  setServer: (sock,api)->
+  setServer: (sock,api)=>
+    # listen to that socket
+    # decorate that socket
+  setClient: (sock,api)=>
+    #listen to that socket
+    # decorate that socket
   serverListen: (sock)=>
     @setListeners sock, @serverApi
 

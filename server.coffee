@@ -64,12 +64,11 @@ lg unpack cnv.to_s 12345
 
 comm.test()
 
-# TODO: CLIENT LIST --
+# TODO: CLIENT LIST -- ie list of players, which HAVE sockets.
 
 gameApi = comm.gameApi
 
 puts = (s)->console.log s
-io.sockets.on 'pa', (data)-> throw "OOOOOOONOOOOOOZ"
 io.sockets.on 'connection', (socket) ->
 
   sayGameState = ->
