@@ -120,24 +120,37 @@ class TinySocketApi extends Module
   # We'll see how well we can do that -- probably end up creating a
   # mixin HERE for things that want to be Socketable, and use it in
   # Player
+  #
+  # # EDIT: NOPES, the api obj we have here is only for
   setEmitters: (sock, api)->
     for fname, cb of api.named
-      evt = api.tiny.findParallelKey fname, api.named, api.tiny
+      puts api.tiny
+      puts "OMG WOWZERS", api
+
+      evt = api.findParallelKey fname, api.named, api.tiny
       sock[ fname ] = (args...)->
         sock.emit( evt )
 
   setListeners: (sock, api)->
     sock.on evt, cb for evt, cb of api.tiny
 
-  setServer: (sock,api)=>
+  setServer: (sock)=>
     # listen to that socket
     # decorate that socket
-  setClient: (sock,api)=>
-    #listen to that socket
-    # decorate that socket
+    @setEmitters sock, api
+    @serverListeners sock, @api
+
+  setServer: (sock)=>
+    f sock for f in [@clientEmit, @serverListen]
+  setClient: (sock)=>
+    f sock for f in [@serverEmit, @clientListen]
+
+  serverEmit: (sock)=>
+    @setEmitters sock, @clientApi
+  clientEmit: (sock)=>
+    @setEmitters sock, @serverApi
   serverListen: (sock)=>
     @setListeners sock, @serverApi
-
   clientListen: (sock)=>
     @setListeners sock, @clientApi
 

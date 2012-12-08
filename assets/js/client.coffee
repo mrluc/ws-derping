@@ -26,7 +26,10 @@ socket.on 'g', (data)->
 
 gameApi = comm.gameApi
 
-gameApi.clientListen socket
+#gameApi.clientListen socket
+gameApi.setClient socket
+
+
 
 # hah. recurring would be prettier, but it's a circular
 #  linked list, so meh
