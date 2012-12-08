@@ -20,16 +20,16 @@ every5s = (fn)-> everyNs 5, fn
 log5s = every5s (s)-> console.log s
 log5s = _.debounce ((s)-> console.log s), 5000
 
+
+socket.on 'message', (s)->console.log "----->>>>>>>>> #{ s }"
 socket.on 'g', (data)->
   console.log data
   socket.emit 'pa', my:'data'
 
-gameApi = comm.gameApi
+w.gameApi = comm.gameApi
 
 #gameApi.clientListen socket
 gameApi.setClient socket
-
-
 
 # hah. recurring would be prettier, but it's a circular
 #  linked list, so meh
@@ -41,15 +41,16 @@ _most = (original, key, fn) ->
     break if not next or next is original # could still recur
     cur = next
 
-w.base64 = require '../../base64'
 sim = require '../../sim'
 w.Box2D = sim.Box2D
-_.extend w, Box2D...
+#_.extend w, Box2D...
+_.extend w, sim.Box2D
 
+# What? which is it?
 # this: just for the janky old demo that loads later in the
 #  page. We need it around to take apart things, like the
 #  vertex api for shapes, etc.
-_.extend w, sim.Box2D
+
 each_sim_tick = ->
   bodies = world.GetBodyList()
   thing = Math.random()

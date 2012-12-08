@@ -71,6 +71,8 @@ gameApi = comm.gameApi
 puts = (s)->console.log s
 io.sockets.on 'connection', (socket) ->
 
+  socket.on 'message', (s)->console.log "----->>>>>>>>> #{ s }"
+  setInterval (-> socket.send('X')), 4000
   #sayGameState = ->
   #  socket.emit 'g', "sflmsdflkmsdfl;kmasdflk;masdf"
   #setInterval sayGameState, 2000
@@ -84,8 +86,7 @@ io.sockets.on 'connection', (socket) ->
 
   #gameApi.serverListen( socket )
   gameApi.setServer( socket )
-
-  socket.playerAction "THING" for i in [0..12]
+  socket.gameState [5*i] for i in [1..12]
 
   socket.on 'pa', (data)->
     puts "Yaaaargh I consume player action, #{data}!"

@@ -1,20 +1,12 @@
 
+# okay what now?
+#  well ... I mean if we really want to be fast, we should at least
+#  dispatch the first 2 chars for a fn table,
+#  and pass the calls along as they are now ...
+
 _ = require 'underscore'
 ext = require('./extensions')
 lg = puts = (s...)->console.log s...
-# awwwwww yeah
-#
-# TODO: write some more dream code -- we've got
-#  actual conversion code, so now it's time
-#  to go back to TinySocketApi and figure out,
-#  what's our "dream code"; ideally, how should
-#  it work?
-#
-# Hmmm. Maybe start hooking up the reporting of
-#  the position of a body in sim, simplest thing poss,
-#  maybe not even using and then
-#  hook up some 'player actions', and the process
-#  of doing that will guide dev.
 
 Module = ext.Module
 
@@ -49,21 +41,30 @@ class Alphabet extends Module
 
 class Conversions extends Module
   @include require 'bases'
-  @e92 = new Alphabet [
+  @e93 = new Alphabet [
     "~`!1@2#3$4%5^6&7*8(9)0"
-    " _-+={[}]|:;<,>.?/"
+    " _-+={[}]|:;'<,>.?/"
     "abcdefghijklmnopqrstuvwxyz"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   ].join('')
-  {@to_s, @to_i} = @e92
+  {@to_s, @to_i} = @e93
 
+# Compressed <-> Verbose hash keys
+#   give it a hash with descriptively named keys and it'll
+#   encode them.
 class CompressedKeys extends Module
+  # TODO: the keys for these need to be unique across all
+  #  instances.
+  cnv = Conversions
+  ck_i = -1
   @include _
-  constructor: (@named)->
+  constructor: (@named, opts={})->
+    {counterStartAt} = opts
+    ck_i = counterStartAt if counterStartAt
     @tiny = {}
     sorted = @sortBy ([k,v] for k,v of @named),
       ([key,cb])-> key
-    @tiny[i.toString(36)] = cb for [key,cb], i in sorted
+    @tiny[cnv.to_s(ck_i += 1)] = cb for [key,cb] in sorted
 
   findParallelKey: (key, first, second)->
     if val = first[key]
@@ -87,7 +88,10 @@ class PackedCalls extends Module
         [val, rest] = argFn s
         s = rest
         args.push val
-      fnToCallWithArgs( args..., rest )
+      if !rest or rest.length is 0 or rest is ""
+        fnToCallWithArgs args...
+      else
+        fnToCallWithArgs( args..., rest )
   @s2i = (bytes)->
     (s)->
       chars = s.slice 0, bytes
@@ -104,46 +108,46 @@ class PackedCalls extends Module
 class TinySocketApi extends Module
   @include _
   constructor: ({@serverListens, @clientListens})->
-    @serverApi = new CompressedKeys @serverListens
+    @serverApi = new CompressedKeys @serverListens, startCounterAt: -1
     @clientApi = new CompressedKeys @clientListens
+    @debug()
 
-  # AHA! We started:
-  #  decorating the SOCKET itself. Cool.
-  # So with that decorated, we could doubtless wrap it, ie via
-  #  "player.doThing = => @sock.playerAction 'arg1', 'arg2'"
-  # which should handle the packing, and server the un.
-  #
-  # And with player defined like that -- assuming appropriate hooks/
-  # etc for validating socket ids on the server side -- the client-side
-  # could be similar, just a single player hooked up to a single socket.
-  #
-  # We'll see how well we can do that -- probably end up creating a
-  # mixin HERE for things that want to be Socketable, and use it in
-  # Player
-  #
-  # # EDIT: NOPES, the api obj we have here is only for
+  debug: =>
+    puts ["------", k, @clientApi.nameForTiny(k)] for k, v of @clientApi.tiny
+    puts ["------", k, @serverApi.nameForTiny(k)] for k, v of @serverApi.tiny
+
   setEmitters: (sock, api)->
     for fname, cb of api.named
       puts api.tiny
       puts "OMG WOWZERS", api
 
       evt = api.findParallelKey fname, api.named, api.tiny
-      sock[ fname ] = (args...)->
+
+      fn = (args...)->
+        puts "--- CALLED: #{ fname }"
         sock.emit( evt, args... )
+
+      sock[ fname ] = if cb.args_encoders
+        puts "Setting up #{ fname }"
+        puts "------------- hey encoders are", cb.args_encoders
+        PackedCalls.unpacker cb.args_encoders..., fn
+      else
+        fn
 
   setListeners: (sock, api)->
     sock.on evt, cb for evt, cb of api.tiny
 
-  setServer: (sock)=>
-    # listen to that socket
-    # decorate that socket
-    @setEmitters sock, api
-    @serverListeners sock, @api
+  #setServer: (sock)=>
+  #  # listen to that socket
+  #  # decorate that socket
+  #  @setEmitters sock, @clientApi
+  #  @serverListeners sock, @serverApi
 
   setServer: (sock)=>
-    f sock for f in [@clientEmit, @serverListen]
+    f sock for f in [@serverEmit, @serverListen]
+
   setClient: (sock)=>
-    f sock for f in [@serverEmit, @clientListen]
+    f sock for f in [@clientEmit, @clientListen]
 
   serverEmit: (sock)=>
     @setEmitters sock, @clientApi
@@ -154,7 +158,7 @@ class TinySocketApi extends Module
   clientListen: (sock)=>
     @setListeners sock, @clientApi
 
-#
+
 # serverListens:
 #   playerAction:
 #     rcv:
@@ -170,15 +174,45 @@ class TinySocketApi extends Module
 
 # huh. Where should we hold onto the sockets?
 #  I think that tinysocketapi should be the place, really.
+
+pc=PackedCalls
+cnv=Conversions
+
+# TEST THIS GUY FIRST -- make sure this makes sense
+#  ie we use encode -- but the fn we should be calling
+#  is just the socket.emit, not the fn they pass in, right?
+# So the unpacker is good but it needs to be given an
+#  emit somehow
+#
+# WHAT ABOUT RETURNING A FUNCTION -- just decorate it with
+#  the conversion stuff as well?
+# OKAY, we need an abstraction for this now, to make it easy to
+#  compose encoders/decoders like this.
+numeric_args = (arg_bytes..., fn)->
+  encargs = (pc.i2s(bytes) for bytes in arg_bytes)
+  decargs = (pc.s2i(bytes) for bytes in arg_bytes)
+
+  puts "-ENCARGS: ", encargs
+  puts "DECARGS: ", decargs
+
+
+  decoder = pc.unpacker decargs..., fn
+
+  # TODO then the emitter would use in setEmitters
+  decoder.args_encoders = encargs
+  decoder
+
 exports.gameApi = new TinySocketApi
   serverListens:
-    playerAction: (s)->
-      console.log "PLAYER ACTION ________ OMG OMG #{ s }"
+    playerAction:
+      numeric_args 2, (val)->
+        console.log "PLAYER ACTION ________ OMG OMG #{ val }"
   clientListens:
-    gameState: (s)->
-      console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+    gameState:
+      numeric_args 2, (s)->
+        console.log "GAME STATE _____ OMG OMG OMG #{ s }"
 
-# todo - private
+# todo - private; no need to use externally right?
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 
@@ -186,12 +220,17 @@ exports.Alphabet = Alphabet
 exports.PackedCalls = PackedCalls
 exports.TinySocketApi = TinySocketApi
 
+
+
+
+# tests
+#
 exports.tests = multiArgs: ->
   cnv = Conversions
   pc = PackedCalls
 
   # NOW: multi-args
-  b = 1
+  bytes = b = 1
   fn = (a,b)->
     lg "THEY GAVED MEZ: #{a} and #{b}"
     lg "a + b == 4? #{(a+b) is 4}"
@@ -233,7 +272,7 @@ exports.tests = multiArgs: ->
 
   puts "PADDING OUT A STRING:"
 
-  puts "Padding out to 5 chars: #{cnv.e92.pad 'XXX', 5}"
+  puts "Padding out to 5 chars: #{cnv.e93.pad 'XXX', 5}"
 
 exports.test = ->
   for name, testFn of exports.tests
