@@ -129,7 +129,7 @@ class TinySocketApi extends Module
 
       evt = api.findParallelKey fname, api.named, api.tiny
       sock[ fname ] = (args...)->
-        sock.emit( evt )
+        sock.emit( evt, args... )
 
   setListeners: (sock, api)->
     sock.on evt, cb for evt, cb of api.tiny
