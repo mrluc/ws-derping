@@ -20,16 +20,14 @@ every5s = (fn)-> everyNs 5, fn
 log5s = every5s (s)-> console.log s
 log5s = _.debounce ((s)-> console.log s), 5000
 
-
+# in addition to the ones that gameApi.setClient sets up for us
+#  TODO remove, verbose.
 socket.on 'message', (s)->console.log "----->>>>>>>>> #{ s }"
-socket.on 'g', (data)->
-  console.log data
-  socket.emit 'pa', my:'data'
 
+# This part is actually important
 w.gameApi = comm.gameApi
-
-#gameApi.clientListen socket
 gameApi.setClient socket
+# that's it (for now ...)
 
 # hah. recurring would be prettier, but it's a circular
 #  linked list, so meh
@@ -43,13 +41,12 @@ _most = (original, key, fn) ->
 
 sim = require '../../sim'
 w.Box2D = sim.Box2D
-#_.extend w, Box2D...
-_.extend w, sim.Box2D
 
-# What? which is it?
 # this: just for the janky old demo that loads later in the
 #  page. We need it around to take apart things, like the
 #  vertex api for shapes, etc.
+_.extend w, sim.Box2D
+
 
 each_sim_tick = ->
   bodies = world.GetBodyList()

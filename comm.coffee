@@ -21,8 +21,8 @@ class Alphabet extends Module
     @replacePad = ///
       ^#{@padChar}+
     ///
-  pad: (s, len)=>
-    s = @padChar + s while s.length < len
+  pad: (s, len, padChar=@padChar)=>
+    s = padChar + s while s.length < len
     s
   to_s: (i,padNumChars=no)=>
     s = @toAlphabet i, @byPosition
@@ -104,10 +104,14 @@ class PackedCalls extends Module
       val = Conversions.to_s rest.shift(), bytes
       [ val, rest ]
 
-
 class TinySocketApi extends Module
+  cnv = Conversions
+  pad = cnv.e93.pad
   @include _
   constructor: ({@serverListens, @clientListens})->
+    # @useEvents()
+    @dispatch = {}
+    @useMessages()
     @serverApi = new CompressedKeys @serverListens, startCounterAt: -1
     @clientApi = new CompressedKeys @clientListens
     @debug()
@@ -116,16 +120,30 @@ class TinySocketApi extends Module
     puts ["------", k, @clientApi.nameForTiny(k)] for k, v of @clientApi.tiny
     puts ["------", k, @serverApi.nameForTiny(k)] for k, v of @serverApi.tiny
 
+  make_emitter: (sock, evt)-> (args...)-> sock.emit( evt, args )
+  make_sender: (sock, evt)-> (args...)-> sock.send ( "#{pad(evt,2)}#{args[0]}" )
+  make_event_listener: (sock, evt,cb)-> sock.on evt, cb
+  make_message_listener: (sock, evt,cb) =>
+    @dispatch[ pad(evt,2) ] = cb
+    sock.on 'message', (s)=>
+       @dispatch[ s?[0..1]] s[2..]
+
+  useEvents: =>
+    @sender = @make_emitter
+    @receiver = @make_event_listener
+  useMessages: =>
+    @sender = @make_sender
+    @receiver = @make_message_listener
+
   setEmitters: (sock, api)->
     for fname, cb of api.named
       puts api.tiny
       puts "OMG WOWZERS", api
-
       evt = api.findParallelKey fname, api.named, api.tiny
 
-      fn = (args...)->
-        puts "--- CALLED: #{ fname }"
-        sock.emit( evt, args... )
+      fn = @sender sock, evt
+      #puts "--- CALLED: #{ fname }"
+      #@sender sock.emit( evt, args... )
 
       sock[ fname ] = if cb.args_encoders
         puts "Setting up #{ fname }"
@@ -135,7 +153,8 @@ class TinySocketApi extends Module
         fn
 
   setListeners: (sock, api)->
-    sock.on evt, cb for evt, cb of api.tiny
+    @receiver( sock, evt, cb ) for evt, cb of api.tiny
+    #sock.on evt, cb for evt, cb of api.tiny
 
   #setServer: (sock)=>
   #  # listen to that socket
