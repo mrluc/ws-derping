@@ -1,5 +1,9 @@
 lib = {}
 _ = require 'underscore'
+ext = require './extensions'
+comm = require './comm'
+{PackedCalls, TinySocketApi, Coders, Conversion} = comm
+
 Backbone = require 'backbone'
 
 lib.Box2D = b = Box2D = require 'box2dnode'
@@ -13,7 +17,7 @@ _most = (original, key, fn) ->
     cur = next
 
 class lib.PhysicalSimulation
-  constructor: (@w, @h, @each_tick, @each_body) ->
+  constructor: (@w=300, @h=150, @each_tick, @each_body) ->
     @gravity = new b.b2Vec2(0, -10)
     @world = new b.b2World @gravity, doSleep = no
 
@@ -36,7 +40,7 @@ class lib.PhysicalSimulation
     bodyDef.position.Set(@w/2, @h - 2);
     @world.CreateBody(bodyDef).CreateFixture(fixDef);
 
-    body = @addCircle()
+    @body = @addCircle()
 
     timeStep = 1.0 / 30.0
     iters = 10
@@ -44,12 +48,6 @@ class lib.PhysicalSimulation
     #for i in [0..60]
     @forever = =>
       @world.Step(1 / 60, 10, 10)
-      #@world.Step timeStep, iters
-      #position = body.GetPosition()
-      #angle = body.GetAngle()
-      #console.log "#{i} #{position.x} - #{position.y}"
-      #@each_tick position.x, position.y if @each_tick
-
       @each_tick( @world ) if @each_tick
       if @each_body
         _most( @world.GetBodyList(), 'm_next', @each_body )
@@ -86,9 +84,7 @@ class lib.Player extends Backbone.Model
     console.log "OMG CALLED ----- #{[ intAmount ]}"
 
 class lib.EventUnpacker
-
 class lib.WorldEventParser
-
 class lib.World
   # The each_tick should be for GAME objects, not just
   #  physical bodies ...
@@ -102,58 +98,42 @@ class lib.World
     @player = new lib.Player
     @players = {} #by id, probably same/derived ws id as well
 
-    # Even if players are entities like other game entities,
-    #  and there's a base class/mixin under there,
-    #
-    # Players
-    #   have_a physical_entity # phys attrs ...
-    #   have_a user_state      # pending player actions,...
-    #     PLUS: lots of other game state
-    #
-    # World
-    #   has_many fixed_geometries
-    #
-    # COMM:
-    #   client sends:
-    #     user actions
-    #      (move, rotate, fire/jump/ etc) optimized
-    #      broadcast messages, enter/leave not optim.
-    #   server sends:
-    #     world geom
-    #     entity attributes
+class lib.Game
+  # hold World, TinySocketApi
+  {int_args, int_list} = Coders
+  constructor: (cbs, args...)->
+    # ONE OTHER POSSIBILITY:
+    #  set up a dispatcher fn that all are bound to,
+    #  then their callbacks are used if they have one
 
-    # players will be attached via userData, and here we may
-    #  hook up their actions, ie - user has "frame_actions" of
-    #  ops to perform in order.
-    # But we provide a mapping class between the UserState obj
-    #  and the PhysicalEntity.
-    #
-    # AHA- and they get updated separately, too.
-    #
-    # The client sends updates to UserState.
-    #  (Probably via some mechanism like queueing actions)
-    #
-    # On both server and client, those actions can be consumed and
-    #  allowed to take effect - so the logic that processes them should
-    #  be shared:
-    #
-    # USER JUMPS
-    #
-    #  User adds to
-    #
-    #  And it should go ahead and update itself, too. It'll get overwritten
-    #  by the authority on the server, that's fine.
-    #
-    # The server sends updates to PhysicalEntity(ies)
-    #
-    #    - it could set up(pseudocode)
-    #
-    #   @userState.on 'change:frame_actions', @dispatchNew (changed)->
-    #     for {action, args} in changed
-    #       @["do_#{action}"], args
-    #
-    # etc
+    # huh ... again, starting too soon on this
+    #   ... but at least move the defs from comm
+    #   into here.
+    @world = new lib.World args...
+    @api = new TinySocketApi
+      serverListens:
+        playerAction:
+          int_args 2, (val...)->
+            console.log "PLAYER ACTION ________ OMG OMG #{ val }"
+      clientListens:
+        gameState:
+          int_args 2, (s...)->
+            console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+          # adding this DUPLICATES the call.
+        gameState2:
+          int_args 2, (s...)->
+            console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+          # adding this DUPLICATES the call.
+        balls2: (s)->
+          console.log s
+        balls: (s)->
+          console.log s
+        list:
+          int_list 5, (val)->
+            console.log "WHOA LISTY LISTISH LISTERINE!!!!"
+            console.log val
 
-#lib.
+
+
 
 module.exports = exports = lib

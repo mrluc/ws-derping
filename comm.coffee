@@ -147,13 +147,7 @@ class TinySocketApi extends Module
       sock.send ( "#{pad(evt,1)}#{args[0]}" )
   make_event_listener: (sock, evt,cb)-> sock.on evt, cb
   make_message_listener: ( sock, evt, cb )=>
-
-    # gotta make the dispatch fn and the
     sock.dispatch_table[ pad(evt,1) ] = cb
-    #if @sock_has_message_listener sock
-    #  console.log "HOMIE, this socket listens to message"
-    #else
-    #  sock.on 'message', sock.dispatch_message
 
   useEvents: =>
     @sender = @make_emitter
@@ -208,53 +202,44 @@ cnv = Conversions
 # OKAY, we need an abstraction for this now, to make it easy to
 #  compose encoders/decoders like this.
 # encode, decode, fn -
-nameThisLaterDammit = (triplets, fn)->
-  encargs = []
-  decargs = []
+class Coders extends Module
+  @define_coder = (triplets, fn)->
+    encargs = []
+    decargs = []
 
-  for [encode, decode, bytes] in triplets
-    encargs.push encode bytes
-    decargs.push decode bytes
+    for [encode, decode, bytes] in triplets
+      encargs.push encode bytes
+      decargs.push decode bytes
 
-  decoder = pc.unpacker decargs..., fn
+    decoder = pc.unpacker decargs..., fn
 
     # TODO then the emitter would use in setEmitters
-  decoder.args_encoders = encargs
-  decoder
+    decoder.args_encoders = encargs
+    decoder
+  #@define_coder = define_coder
+  @int_list = (bytes, fn)=>
+    @define_coder [[pc.a2s, pc.s2a, bytes]], fn
+  @int_args = (arg_bytes..., fn)=>
+    triplets = []
+    for bytes in arg_bytes
+      triplets.push [ pc.i2s, pc.s2i, bytes ]
+    @define_coder triplets, fn
 
-listOfNums = (bytes, fn)->
-  nameThisLaterDammit [[pc.a2s, pc.s2a, bytes]], fn
-numeric_args = (arg_bytes..., fn)->
-  triplets = []
-  for bytes in arg_bytes
-    triplets.push [ pc.i2s, pc.s2i, bytes ]
-  nameThisLaterDammit triplets, fn
-
-numeric_args2 = (arg_bytes..., fn)->
-  encargs = (pc.i2s(bytes) for bytes in arg_bytes)
-  decargs = (pc.s2i(bytes) for bytes in arg_bytes)
-
-  decoder = pc.unpacker decargs..., fn
-
-  # TODO then the emitter would use in setEmitters
-  decoder.args_encoders = encargs
-  decoder
+{int_list, int_args} = Coders
 
 exports.gameApi = new TinySocketApi
   serverListens:
-    somethingElseButNowTheyllGetCalledTwiceIBet: (s)-> throw 0
-    somethingElseButNowTheyllGetCalledThriceIBet2: (s)-> throw 0
     playerAction:
-      numeric_args 2, (val...)->
+      int_args 2, (val...)->
         console.log "PLAYER ACTION ________ OMG OMG #{ val }"
 
   clientListens:
     gameState:
-      numeric_args 2, (s...)->
+      int_args 2, (s...)->
         console.log "GAME STATE _____ OMG OMG OMG #{ s }"
       # adding this DUPLICATES the call.
     gameState2:
-      numeric_args 2, (s...)->
+      int_args 2, (s...)->
         console.log "GAME STATE _____ OMG OMG OMG #{ s }"
       # adding this DUPLICATES the call.
     balls2: (s)->
@@ -262,11 +247,12 @@ exports.gameApi = new TinySocketApi
     balls: (s)->
       console.log s
     list:
-      listOfNums 5, (val)->
+      int_list 5, (val)->
         console.log "WHOA LISTY LISTISH LISTERINE!!!!"
         console.log val
 
 # todo - private; no need to use externally right?
+exports.Coders = Coders
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 

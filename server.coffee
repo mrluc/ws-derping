@@ -44,12 +44,13 @@ comm = require './comm'
 cnv = comm.Conversions
 pack = comm.PackedCalls
 sim = require './sim'
-world = new sim.World
 
 comm.test()
 
 # TODO: CLIENT LIST -- ie list of players WITH sockets.
-gameApi = comm.gameApi
+game = new sim.Game
+gameApi = game.api
+world = game.world
 
 puts = (s)->console.log s
 io.sockets.on 'connection', (socket) ->
@@ -59,7 +60,6 @@ io.sockets.on 'connection', (socket) ->
   gameApi.setServer( socket )
   socket.gameState [5*i] for i in [1..12]
   socket.balls "HEY MAN WHAT'S UP"
-
 
   nums = (parseInt( Math.random()*92*92*92*92*90 ) for i in [0..5])
   snums = JSON.stringify nums

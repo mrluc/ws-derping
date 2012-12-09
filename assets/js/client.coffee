@@ -20,11 +20,7 @@ log5s = every5s (s)-> console.log s
 log5s = _.debounce ((s)-> console.log s), 5000
 
 # our tinySocketApi
-w.gameApi = comm.gameApi
-gameApi.setClient( socket )
-
-# send data to server
-socket.playerAction [5]
+#w.gameApi = comm.gameApi
 
 # TODO: Okay, this is a DEBUG MODE just for
 #  the physical sim portion. These eachticks
@@ -43,9 +39,10 @@ each_tick = (world)->
 each_body = ( body )->
   # console.log
   b = body
-  pos = body.GetPosition()
+
   fl = body.GetFixtureList()
   if fl
+    pos = body.GetPosition()
     shape = fl.GetShape()
     shapeType = fl.GetType()
     flipy = ourheight - pos.y
@@ -82,7 +79,15 @@ each_body = ( body )->
       ctx.stroke();
       ctx.fill();
 
-w.gameWorld = new sim.World ourwidth, ourheight, each_tick, each_body
+w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
+
+gameApi = game.api
+gameWorld = game.world
+
+gameApi.setClient( socket )
+
+# send data to server
+socket.playerAction [5]
 
 console.log gameWorld
 
