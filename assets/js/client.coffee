@@ -24,9 +24,12 @@ log5s = _.debounce ((s)-> console.log s), 5000
 #  TODO remove, verbose.
 socket.on 'message', (s)->console.log "----->>>>>>>>> #{ s }"
 
+
+
 # This part is actually important
 w.gameApi = comm.gameApi
 gameApi.setClient socket
+socket.playerAction [5] #a bit stilted
 # that's it (for now ...)
 
 # hah. recurring would be prettier, but it's a circular
@@ -49,11 +52,11 @@ _.extend w, sim.Box2D
 
 
 each_sim_tick = ->
-  bodies = world.GetBodyList()
-  thing = Math.random()
-  _most bodies, 'm_next', (o)->
-    console.log "found one #{thing}"
-    console.log o
+  #bodies = world.GetBodyList()
+  #thing = Math.random()
+  #_most bodies, 'm_next', (o)->
+  #  console.log "found one #{thing}"
+  #  console.log o
 
 nows = Date.now()
 keepGoing = ->

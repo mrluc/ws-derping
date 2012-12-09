@@ -6,7 +6,7 @@
 
 _ = require 'underscore'
 ext = require('./extensions')
-lg = puts = (s...)->console.log s...
+lg = puts = (s...) -> console.log s...
 
 Module = ext.Module
 
@@ -46,6 +46,7 @@ class Conversions extends Module
     " _-+={[}]|:;'<,>.?/"
     "abcdefghijklmnopqrstuvwxyz"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
   ].join('')
   {@to_s, @to_i} = @e93
 
@@ -77,9 +78,6 @@ class CompressedKeys extends Module
 
 
 class PackedCalls extends Module
-  #HEY. With approp. argsConsumers,
-  # couldn't this work for encoding as well? Seems
-  # general enough ...
   @cnv = exports.Conversions
   @unpacker = (argConsumers..., fnToCallWithArgs = puts)->
     (s)->
@@ -109,9 +107,10 @@ class TinySocketApi extends Module
   pad = cnv.e93.pad
   @include _
   constructor: ({@serverListens, @clientListens})->
-    # @useEvents()
     @dispatch = {}
-    @useMessages()
+    @useMessages()    # faster
+    # @useEvents()    # dead-easy way to send json.
+
     @serverApi = new CompressedKeys @serverListens, startCounterAt: -1
     @clientApi = new CompressedKeys @clientListens
     @debug()
@@ -121,12 +120,11 @@ class TinySocketApi extends Module
     puts ["------", k, @serverApi.nameForTiny(k)] for k, v of @serverApi.tiny
 
   make_emitter: (sock, evt)-> (args...)-> sock.emit( evt, args )
-  make_sender: (sock, evt)-> (args...)-> sock.send ( "#{pad(evt,2)}#{args[0]}" )
+  make_sender: (sock, evt)-> (args...)-> sock.send ( "#{pad(evt,1)}#{args[0]}" )
   make_event_listener: (sock, evt,cb)-> sock.on evt, cb
   make_message_listener: (sock, evt,cb) =>
-    @dispatch[ pad(evt,2) ] = cb
-    sock.on 'message', (s)=>
-       @dispatch[ s?[0..1]] s[2..]
+    @dispatch[ pad(evt,1) ] = cb
+    sock.on 'message', (s)=> @dispatch[ s?[0] ] s[1..]
 
   useEvents: =>
     @sender = @make_emitter
@@ -137,13 +135,9 @@ class TinySocketApi extends Module
 
   setEmitters: (sock, api)->
     for fname, cb of api.named
-      puts api.tiny
-      puts "OMG WOWZERS", api
       evt = api.findParallelKey fname, api.named, api.tiny
 
       fn = @sender sock, evt
-      #puts "--- CALLED: #{ fname }"
-      #@sender sock.emit( evt, args... )
 
       sock[ fname ] = if cb.args_encoders
         puts "Setting up #{ fname }"
@@ -154,48 +148,17 @@ class TinySocketApi extends Module
 
   setListeners: (sock, api)->
     @receiver( sock, evt, cb ) for evt, cb of api.tiny
-    #sock.on evt, cb for evt, cb of api.tiny
-
-  #setServer: (sock)=>
-  #  # listen to that socket
-  #  # decorate that socket
-  #  @setEmitters sock, @clientApi
-  #  @serverListeners sock, @serverApi
 
   setServer: (sock)=>
-    f sock for f in [@serverEmit, @serverListen]
+    @setEmitters sock, @clientApi
+    @setListeners sock, @serverApi
 
   setClient: (sock)=>
-    f sock for f in [@clientEmit, @clientListen]
-
-  serverEmit: (sock)=>
-    @setEmitters sock, @clientApi
-  clientEmit: (sock)=>
     @setEmitters sock, @serverApi
-  serverListen: (sock)=>
-    @setListeners sock, @serverApi
-  clientListen: (sock)=>
     @setListeners sock, @clientApi
 
-
-# serverListens:
-#   playerAction:
-#     rcv:
-#     send:
-#
-# Maybe on setup, I say:
-#
-#  gameApi = gameApi.setServer()
-#
-# That hooks up the serverListens.rcv, and the
-# clientListens.sends.
-#
-
-# huh. Where should we hold onto the sockets?
-#  I think that tinysocketapi should be the place, really.
-
-pc=PackedCalls
-cnv=Conversions
+pc  = PackedCalls
+cnv = Conversions
 
 # TEST THIS GUY FIRST -- make sure this makes sense
 #  ie we use encode -- but the fn we should be calling
@@ -211,10 +174,6 @@ numeric_args = (arg_bytes..., fn)->
   encargs = (pc.i2s(bytes) for bytes in arg_bytes)
   decargs = (pc.s2i(bytes) for bytes in arg_bytes)
 
-  puts "-ENCARGS: ", encargs
-  puts "DECARGS: ", decargs
-
-
   decoder = pc.unpacker decargs..., fn
 
   # TODO then the emitter would use in setEmitters
@@ -224,12 +183,15 @@ numeric_args = (arg_bytes..., fn)->
 exports.gameApi = new TinySocketApi
   serverListens:
     playerAction:
-      numeric_args 2, (val)->
+      numeric_args 2, (val...)->
         console.log "PLAYER ACTION ________ OMG OMG #{ val }"
   clientListens:
     gameState:
-      numeric_args 2, (s)->
+      numeric_args 2, (s...)->
         console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+    balls: (s)->
+
+      console.log s
 
 # todo - private; no need to use externally right?
 exports.Conversions = Conversions

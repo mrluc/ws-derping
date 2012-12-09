@@ -1,13 +1,15 @@
 lg = puts = (s...)->console.log s...
 
+# ------- CONFIG -------
+#
 connect = require 'connect'
 express = require 'express'
 app = express()
 server = require('http').createServer(app)
 app.use connect.compress()
 io = require('socket.io').listen server,
-  "browser client gzip":yes
-  "browser client minification":yes
+  "browser client gzip": yes
+  "browser client minification": yes
 
 env = 'development'
 debug = yes
@@ -20,7 +22,7 @@ sass =
 app.use require('node-sass').middleware sass
 
 lg 'Configure views - static public; view engine'
-app.use express.static "#{__dirname}/public"
+app.use express.static "#{ __dirname }/public"
 app.set 'view engine', 'jade'
 app.engine 'jade', (require 'consolidate').jade
 
@@ -36,57 +38,32 @@ app.use bundle
 lg 'Configure routes - one route, one view'
 app.get '/', (req, res) -> res.render 'index'
 
+# ------- GAME ---------
+#
 comm = require './comm'
 cnv = comm.Conversions
 pack = comm.PackedCalls
 sim = require './sim'
 world = new sim.World
 
-
-#callUnpacker = (argConsumers..., fnToCallWithArgs = puts)->
-#  (s)->
-#    puts "A string -- #{s} -- that is #{s.length} chars long"
-#    args=[]
-#    for argFn in argConsumers
-#      [val, rest] = argFn s
-#      puts "Consumed #{val}, rest: #{rest}"
-#      s = rest
-#      args.push val
-#    puts "Now going to call with args: #{args}"
-#    fnToCallWithArgs( args... )
-
-# okay -- we need to simulate a
-unpack = pack.unpacker pack.s2i(3), (args...)->
-  lg "NO WAY. AWESOME ARGS ---> "
-  lg JSON.stringify(arg) for arg in args
-
-lg unpack cnv.to_s 12345
-
 comm.test()
 
-# TODO: CLIENT LIST -- ie list of players, which HAVE sockets.
-
+# TODO: CLIENT LIST -- ie list of players WITH sockets.
 gameApi = comm.gameApi
 
 puts = (s)->console.log s
 io.sockets.on 'connection', (socket) ->
 
-  socket.on 'message', (s)->console.log "----->>>>>>>>> #{ s }"
-  setInterval (-> socket.send('X')), 4000
-  #sayGameState = ->
-  #  socket.emit 'g', "sflmsdflkmsdfl;kmasdflk;masdf"
-  #setInterval sayGameState, 2000
+  socket.on 'message', (s)->console.log "-->>>>> #{ s }"
+  # setInterval (-> socket.send('X')), 4000
 
-  # TODO: all object keys should be tiny as well.
-  #
   u = world.players[ socket.id ] = {
     userActions: [],
     state: {}
   }
-
-  #gameApi.serverListen( socket )
   gameApi.setServer( socket )
-  socket.gameState [5*i] for i in [1..12]
+  socket.gameState [5*i, 11111111] for i in [1..12]
+  #socket.balls "HEY MAN WHAT'S UP"
 
   socket.on 'pa', (data)->
     puts "Yaaaargh I consume player action, #{data}!"
