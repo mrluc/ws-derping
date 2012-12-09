@@ -59,8 +59,10 @@ io.sockets.on 'connection', (socket) ->
 
   u = world.players[ socket.id ] = { userActions: [], state: {} }
   gameApi.setServer( socket )
-  socket.gameState [5*i, 11111111] for i in [1..12]
+  socket.gameState [5*i] for i in [1..12]
   socket.balls "HEY MAN WHAT'S UP"
+
+  socket.list [1,2,3,4,5]
 
   socket.on 'pa', (data)->
     puts "Yaaaargh I consume player action, #{data}!"

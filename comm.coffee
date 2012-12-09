@@ -18,9 +18,7 @@ class Alphabet extends Module
     for s, i in @byPosition.split ""
       @byLetter[s] = i
     @padChar = @to_s 0
-    @replacePad = ///
-      ^#{@padChar}+
-    ///
+    @replacePad = /// ^#{@padChar}+ ///
   pad: (s, len, padChar=@padChar)=>
     s = padChar + s while s.length < len
     s
@@ -90,6 +88,17 @@ class PackedCalls extends Module
         fnToCallWithArgs args...
       else
         fnToCallWithArgs( args..., rest )
+  @s2a = (bytes)->
+    (s)->
+      val = []
+      for i in [0..(s.length-1)] by bytes
+        val.push Conversions.to_i( s[i..(i+bytes-1)], bytes )
+      [ val, []]
+  @a2s = (bytes)->
+    (rest)->
+      total=""
+      total+= Conversions.to_s( i, bytes ) for i in rest
+      [ total, []]
   @s2i = (bytes)->
     (s)->
       chars = s.slice 0, bytes
@@ -201,6 +210,8 @@ nameThisLaterDammit = (triplets, fn)->
   decoder.args_encoders = encargs
   decoder
 
+listOfNums = (bytes, fn)->
+  nameThisLaterDammit [[pc.a2s, pc.s2a, bytes]], fn
 numeric_args = (arg_bytes..., fn)->
   encargs = (pc.i2s(bytes) for bytes in arg_bytes)
   decargs = (pc.s2i(bytes) for bytes in arg_bytes)
@@ -214,15 +225,24 @@ numeric_args = (arg_bytes..., fn)->
 exports.gameApi = new TinySocketApi
   serverListens:
     playerAction:
-      #numeric_args 2, (val...)->
-      nameThisLaterDammit [[pc.i2s, pc.s2i, 2]], (val...)->
+      numeric_args 2, (val...)->
+      #nameThisLaterDammit( [
+      #  [pc.i2s, pc.s2i, 2]
+      #  [pc.i2s,
+      #],
+      #(val...)->
         console.log "PLAYER ACTION ________ OMG OMG #{ val }"
+      #)
   clientListens:
     gameState:
       numeric_args 2, (s...)->
         console.log "GAME STATE _____ OMG OMG OMG #{ s }"
     balls: (s)->
       console.log s
+    list:
+      listOfNums 2, (val)->
+        console.log "WHOA LISTY LISTISH LISTERINE!!!!"
+        console.log val
 
 # todo - private; no need to use externally right?
 exports.Conversions = Conversions
