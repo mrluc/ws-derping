@@ -54,15 +54,18 @@ gameApi = comm.gameApi
 puts = (s)->console.log s
 io.sockets.on 'connection', (socket) ->
 
-  socket.on 'message', (s)->console.log "-->>>>> #{ s }"
+  #socket.on 'message', (s)->console.log "-->>>>> #{ s }"
   # setInterval (-> socket.send('X')), 4000
 
   u = world.players[ socket.id ] = { userActions: [], state: {} }
   gameApi.setServer( socket )
   socket.gameState [5*i] for i in [1..12]
-  socket.balls "HEY MAN WHAT'S UP"
+  #socket.balls "HEY MAN WHAT'S UP"
 
-  socket.list [1,2,3,4,5]
+  nums = (parseInt(Math.random()*92*92) for i in [0..5])
+  snums = JSON.stringify nums
+  #socket.list nums
+  #socket.balls snums
 
   socket.on 'pa', (data)->
     puts "Yaaaargh I consume player action, #{data}!"

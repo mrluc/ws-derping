@@ -122,7 +122,7 @@ class TinySocketApi extends Module
   constructor: ({@serverListens, @clientListens})->
     @dispatch = {}
     @useMessages()    # faster, trickier
-    # @useEvents()    # dead-easy json
+    #@useEvents()    # dead-easy json
 
     @serverApi = new CompressedKeys @serverListens, startCounterAt: -1
     @clientApi = new CompressedKeys @clientListens
@@ -132,18 +132,21 @@ class TinySocketApi extends Module
     puts ["------", k, @clientApi.nameForTiny(k)] for k, v of @clientApi.tiny
     puts ["------", k, @serverApi.nameForTiny(k)] for k, v of @serverApi.tiny
 
-  make_emitter: (sock, evt)-> (args...)-> sock.emit( evt, args )
-  make_sender: (sock, evt)-> (args...)-> sock.send ( "#{pad(evt,1)}#{args[0]}" )
+  make_emitter: (sock, evt)->
+    (args...)->
+      sock.emit( evt, args )
+  make_sender: (sock, evt)->
+    (args...)->
+      sock.send ( "#{pad(evt,1)}#{args[0]}" )
   make_event_listener: (sock, evt,cb)-> sock.on evt, cb
   make_message_listener: ( sock, evt, cb )=>
 
     # gotta make the dispatch fn and the
-
     sock.dispatch_table[ pad(evt,1) ] = cb
-    if @sock_has_message_listener sock
-      console.log "HOMIE, this socket listens to message"
-    else
-      sock.on 'message', sock.dispatch_message
+    #if @sock_has_message_listener sock
+    #  console.log "HOMIE, this socket listens to message"
+    #else
+    #  sock.on 'message', sock.dispatch_message
 
   useEvents: =>
     @sender = @make_emitter
@@ -161,6 +164,7 @@ class TinySocketApi extends Module
       sock[ fname ] = if cb.args_encoders
         puts "Setting up #{ fname }"
         puts "------------- hey encoders are", cb.args_encoders
+        # AHA, I think that this could be interfering
         PackedCalls.unpacker cb.args_encoders..., fn
       else
         fn
@@ -172,6 +176,7 @@ class TinySocketApi extends Module
     sock.dispatch_table = {}
     sock.dispatch_message = (s)->
       sock.dispatch_table[ s?[0] ] s[1..]
+    sock.on 'message', sock.dispatch_message
   setServer: (sock)=>
     @dispatchify sock
     @setEmitters sock, @clientApi
@@ -213,6 +218,12 @@ nameThisLaterDammit = (triplets, fn)->
 listOfNums = (bytes, fn)->
   nameThisLaterDammit [[pc.a2s, pc.s2a, bytes]], fn
 numeric_args = (arg_bytes..., fn)->
+  triplets = []
+  for bytes in arg_bytes
+    triplets.push [ pc.i2s, pc.s2i, bytes ]
+  nameThisLaterDammit triplets, fn
+
+numeric_args2 = (arg_bytes..., fn)->
   encargs = (pc.i2s(bytes) for bytes in arg_bytes)
   decargs = (pc.s2i(bytes) for bytes in arg_bytes)
 
@@ -224,19 +235,23 @@ numeric_args = (arg_bytes..., fn)->
 
 exports.gameApi = new TinySocketApi
   serverListens:
+    somethingElseButNowTheyllGetCalledTwiceIBet: (s)-> throw 0
+    somethingElseButNowTheyllGetCalledThriceIBet2: (s)-> throw 0
     playerAction:
       numeric_args 2, (val...)->
-      #nameThisLaterDammit( [
-      #  [pc.i2s, pc.s2i, 2]
-      #  [pc.i2s,
-      #],
-      #(val...)->
         console.log "PLAYER ACTION ________ OMG OMG #{ val }"
-      #)
+
   clientListens:
     gameState:
       numeric_args 2, (s...)->
         console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+      # adding this DUPLICATES the call.
+    gameState2:
+      numeric_args 2, (s...)->
+        console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+      # adding this DUPLICATES the call.
+    balls2: (s)->
+      console.log s
     balls: (s)->
       console.log s
     list:
@@ -251,8 +266,6 @@ exports.Alphabet = Alphabet
 # public
 exports.PackedCalls = PackedCalls
 exports.TinySocketApi = TinySocketApi
-
-
 
 
 # tests

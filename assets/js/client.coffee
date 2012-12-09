@@ -22,7 +22,7 @@ log5s = _.debounce ((s)-> console.log s), 5000
 
 # in addition to the ones that gameApi.setClient sets up for us
 #  TODO remove, verbose.
-socket.on 'message', (s)->console.log "----->>>>>>>>> #{ s }"
+#socket.on 'message', (s)->console.log "----->>>>>>>>> #{ s }"
 
 
 
