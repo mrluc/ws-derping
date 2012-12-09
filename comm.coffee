@@ -130,11 +130,11 @@ class TinySocketApi extends Module
 
     # gotta make the dispatch fn and the
 
-    sock.dispatch[ pad(evt,1) ] = cb
+    sock.dispatch_table[ pad(evt,1) ] = cb
     if @sock_has_message_listener sock
       console.log "HOMIE, this socket listens to message"
     else
-      sock.on 'message', @dispatch_message
+      sock.on 'message', sock.dispatch_message
 
   useEvents: =>
     @sender = @make_emitter
@@ -159,14 +159,17 @@ class TinySocketApi extends Module
   setListeners: (sock, api)->
     @receiver( sock, evt, cb ) for evt, cb of api.tiny
 
+  dispatchify: (sock)->
+    sock.dispatch_table = {}
+    sock.dispatch_message = (s)->
+      sock.dispatch_table[ s?[0] ] s[1..]
   setServer: (sock)=>
-    sock.dispatch = {}
-    sock.dispatch_message = (s)-> sock.dispatch[ s?[0] ] s[1..]
+    @dispatchify sock
     @setEmitters sock, @clientApi
     @setListeners sock, @serverApi
 
   setClient: (sock)=>
-    sock.dispatch = {}
+    @dispatchify sock
     @setEmitters sock, @serverApi
     @setListeners sock, @clientApi
 
@@ -183,6 +186,21 @@ cnv = Conversions
 #  the conversion stuff as well?
 # OKAY, we need an abstraction for this now, to make it easy to
 #  compose encoders/decoders like this.
+# encode, decode, fn -
+nameThisLaterDammit = (triplets, fn)->
+  encargs = []
+  decargs = []
+
+  for [encode, decode, bytes] in triplets
+    encargs.push encode bytes
+    decargs.push decode bytes
+
+  decoder = pc.unpacker decargs..., fn
+
+    # TODO then the emitter would use in setEmitters
+  decoder.args_encoders = encargs
+  decoder
+
 numeric_args = (arg_bytes..., fn)->
   encargs = (pc.i2s(bytes) for bytes in arg_bytes)
   decargs = (pc.s2i(bytes) for bytes in arg_bytes)
@@ -196,14 +214,14 @@ numeric_args = (arg_bytes..., fn)->
 exports.gameApi = new TinySocketApi
   serverListens:
     playerAction:
-      numeric_args 2, (val...)->
+      #numeric_args 2, (val...)->
+      nameThisLaterDammit [[pc.i2s, pc.s2i, 2]], (val...)->
         console.log "PLAYER ACTION ________ OMG OMG #{ val }"
   clientListens:
     gameState:
       numeric_args 2, (s...)->
         console.log "GAME STATE _____ OMG OMG OMG #{ s }"
     balls: (s)->
-
       console.log s
 
 # todo - private; no need to use externally right?
