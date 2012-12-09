@@ -39,14 +39,19 @@ class Alphabet extends Module
 
 class Conversions extends Module
   @include require 'bases'
-  @e93 = new Alphabet [
+  @e64 = new Alphabet [
+    "1234567890"                 # 10
+    "abcdefghijklmnopqrstuvwxyz" # 26
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" # 26  = 62
+    "-_"
+  ].join('')
+  @e93 = @alphabet = new Alphabet [
     "~`!1@2#3$4%5^6&7*8(9)0"
     " _-+={[}]|:;'<,>.?/"
     "abcdefghijklmnopqrstuvwxyz"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
   ].join('')
-  {@to_s, @to_i} = @e93
+  {@to_s, @to_i} = @alphabet
 
 # Compressed <-> Verbose hash keys
 #   give it a hash with descriptively named keys and it'll
@@ -88,6 +93,8 @@ class PackedCalls extends Module
         fnToCallWithArgs args...
       else
         fnToCallWithArgs( args..., rest )
+
+  # some consumers
   @s2a = (bytes)->
     (s)->
       val = []
@@ -113,7 +120,7 @@ class PackedCalls extends Module
 
 class TinySocketApi extends Module
   cnv = Conversions
-  pad = cnv.e93.pad
+  pad = cnv.alphabet.pad
   @include _
   dispatch_message: (s)=> @dispatch[ s?[0] ] s[1..]
   sock_has_message_listener: (sock)->
@@ -122,7 +129,7 @@ class TinySocketApi extends Module
   constructor: ({@serverListens, @clientListens})->
     @dispatch = {}
     @useMessages()    # faster, trickier
-    #@useEvents()    # dead-easy json
+    #@useEvents()    # dead-easy json which I might have broken.
 
     @serverApi = new CompressedKeys @serverListens, startCounterAt: -1
     @clientApi = new CompressedKeys @clientListens
@@ -255,7 +262,7 @@ exports.gameApi = new TinySocketApi
     balls: (s)->
       console.log s
     list:
-      listOfNums 2, (val)->
+      listOfNums 5, (val)->
         console.log "WHOA LISTY LISTISH LISTERINE!!!!"
         console.log val
 
@@ -317,7 +324,7 @@ exports.tests = multiArgs: ->
 
   puts "PADDING OUT A STRING:"
 
-  puts "Padding out to 5 chars: #{cnv.e93.pad 'XXX', 5}"
+  puts "Padding out to 5 chars: #{cnv.alphabet.pad 'XXX', 5}"
 
 exports.test = ->
   for name, testFn of exports.tests

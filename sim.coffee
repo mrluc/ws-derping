@@ -4,8 +4,16 @@ Backbone = require 'backbone'
 
 lib.Box2D = b = Box2D = require 'box2dnode'
 
+_most = (original, key, fn) ->
+  [cur, next] = [original, no]
+  while cur
+    fn cur
+    next = cur[key]
+    break if not next or next is original # could still recur
+    cur = next
+
 class lib.PhysicalSimulation
-  constructor: (@each_tick) ->
+  constructor: (@w, @h, @each_tick, @each_body) ->
     @gravity = new b.b2Vec2(0, -10)
     @world = new b.b2World @gravity, doSleep = no
 
@@ -21,11 +29,11 @@ class lib.PhysicalSimulation
 
     # hardcoding assuming 300px wide, 150 tall.
     # look in box2d apis to 'get' these
-    fixDef.shape.SetAsBox 150, 2
+    fixDef.shape.SetAsBox @h, 2
 
-    bodyDef.position.Set 150, 0
+    bodyDef.position.Set @h, 0
     @world.CreateBody(bodyDef).CreateFixture(fixDef)
-    bodyDef.position.Set(300/2, 150 -2);
+    bodyDef.position.Set(@w/2, @h - 2);
     @world.CreateBody(bodyDef).CreateFixture(fixDef);
 
     body = @addCircle()
@@ -33,13 +41,19 @@ class lib.PhysicalSimulation
     timeStep = 1.0 / 30.0
     iters = 10
 
-    for i in [0..60]
-      @world.Step timeStep, iters
-      position = body.GetPosition()
-      angle = body.GetAngle()
-      console.log "#{i} #{position.x} - #{position.y}"
-      @each_tick position.x, position.y if @each_tick
+    #for i in [0..60]
+    @forever = =>
+      @world.Step(1 / 60, 10, 10)
+      #@world.Step timeStep, iters
+      #position = body.GetPosition()
+      #angle = body.GetAngle()
+      #console.log "#{i} #{position.x} - #{position.y}"
+      #@each_tick position.x, position.y if @each_tick
 
+      @each_tick( @world ) if @each_tick
+      if @each_body
+        _most( @world.GetBodyList(), 'm_next', @each_body )
+    setInterval @forever, 50 # 20fps
     # TODO: class this for node/browser
     #z = setInterval(eachStep, timeStep);
 
@@ -57,10 +71,8 @@ class lib.PhysicalSimulation
     fixDef.shape = new b.b2CircleShape(
       scale * Math.random()
     );
-    canvaswidth = 300
-    canvasheight = 120
-    bodyDef.position.x = (canvaswidth - scale*2)*Math.random() + scale * 2;
-    bodyDef.position.y = canvasheight - (scale * Math.random() + scale * 2);
+    bodyDef.position.x = (@w - scale*2)*Math.random() + scale * 2;
+    bodyDef.position.y = @h - (scale * Math.random() + scale * 2);
     b = @world.CreateBody(bodyDef)
     f = b.CreateFixture(fixDef);
 
@@ -78,10 +90,15 @@ class lib.EventUnpacker
 class lib.WorldEventParser
 
 class lib.World
-
-  constructor: ()->
+  # The each_tick should be for GAME objects, not just
+  #  physical bodies ...
+  # BUT we will need a debug mode at any rate for the phys
+  #  stuff, so do that.
+  #
+  # TODO: just pass through all args to physsim
+  constructor: (args...)->
     @time = Date.now()
-    @sim = new lib.PhysicalSimulation
+    @sim = new lib.PhysicalSimulation args...
     @player = new lib.Player
     @players = {} #by id, probably same/derived ws id as well
 

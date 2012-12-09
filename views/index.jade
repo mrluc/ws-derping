@@ -4,14 +4,17 @@ html( lang="en" )
   head
     //script( src='https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js' )
     link( rel='stylesheet', src='/test.css' )
-  body( onload="init(false, 16);" )
+  //body( onload="init(false, 16);" )
+  body
     // script( src='/box2d.js' )
 
     script( src='/socket.io/socket.io.js' )
-    script( src='/bundle.js' )
 
     canvas( id='canvas' )
+
     div( id='world' )
+    canvas( id='cworld' )
+    script( src='/bundle.js' )
 
     // != js('app')
-    script( src='/boxdemo.js' )
+    // script( src='/boxdemo.js' )
