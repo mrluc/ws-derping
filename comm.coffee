@@ -106,10 +106,14 @@ class TinySocketApi extends Module
   cnv = Conversions
   pad = cnv.e93.pad
   @include _
+  dispatch_message: (s)=> @dispatch[ s?[0] ] s[1..]
+  sock_has_message_listener: (sock)->
+    @contains sock.$events?.message, sock.dispatch_message
+
   constructor: ({@serverListens, @clientListens})->
     @dispatch = {}
-    @useMessages()    # faster
-    # @useEvents()    # dead-easy way to send json.
+    @useMessages()    # faster, trickier
+    # @useEvents()    # dead-easy json
 
     @serverApi = new CompressedKeys @serverListens, startCounterAt: -1
     @clientApi = new CompressedKeys @clientListens
@@ -122,9 +126,15 @@ class TinySocketApi extends Module
   make_emitter: (sock, evt)-> (args...)-> sock.emit( evt, args )
   make_sender: (sock, evt)-> (args...)-> sock.send ( "#{pad(evt,1)}#{args[0]}" )
   make_event_listener: (sock, evt,cb)-> sock.on evt, cb
-  make_message_listener: (sock, evt,cb) =>
-    @dispatch[ pad(evt,1) ] = cb
-    sock.on 'message', (s)=> @dispatch[ s?[0] ] s[1..]
+  make_message_listener: ( sock, evt, cb )=>
+
+    # gotta make the dispatch fn and the
+
+    sock.dispatch[ pad(evt,1) ] = cb
+    if @sock_has_message_listener sock
+      console.log "HOMIE, this socket listens to message"
+    else
+      sock.on 'message', @dispatch_message
 
   useEvents: =>
     @sender = @make_emitter
@@ -150,10 +160,13 @@ class TinySocketApi extends Module
     @receiver( sock, evt, cb ) for evt, cb of api.tiny
 
   setServer: (sock)=>
+    sock.dispatch = {}
+    sock.dispatch_message = (s)-> sock.dispatch[ s?[0] ] s[1..]
     @setEmitters sock, @clientApi
     @setListeners sock, @serverApi
 
   setClient: (sock)=>
+    sock.dispatch = {}
     @setEmitters sock, @serverApi
     @setListeners sock, @clientApi
 
