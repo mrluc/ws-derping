@@ -66,8 +66,7 @@ class CompressedKeys extends Module
     {counterStartAt} = opts
     ck_i = counterStartAt if counterStartAt
     @tiny = {}
-    sorted = @sortBy ([k,v] for k,v of @named),
-      ([key,cb])-> key
+    sorted = @sortBy ([k,v] for k,v of @named), ([key,cb])-> key
     @tiny[cnv.to_s(ck_i += 1)] = cb for [key,cb] in sorted
 
   findParallelKey: (key, first, second)->
@@ -191,17 +190,6 @@ class TinySocketApi extends Module
 pc  = PackedCalls
 cnv = Conversions
 
-# TEST THIS GUY FIRST -- make sure this makes sense
-#  ie we use encode -- but the fn we should be calling
-#  is just the socket.emit, not the fn they pass in, right?
-# So the unpacker is good but it needs to be given an
-#  emit somehow
-#
-# WHAT ABOUT RETURNING A FUNCTION -- just decorate it with
-#  the conversion stuff as well?
-# OKAY, we need an abstraction for this now, to make it easy to
-#  compose encoders/decoders like this.
-# encode, decode, fn -
 class Coders extends Module
   @define_coder = (triplets, fn)->
     encargs = []

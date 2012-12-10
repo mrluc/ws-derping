@@ -4,17 +4,15 @@ w = window
 puts = (args...) -> console.log args...
 
 w.bases = require 'bases'
-w._ = _ = require 'underscore'
+w._ = require 'underscore'
 w.socket = io.connect 'http://localhost:4001'
 w.hammer = require './hammer'
 
-window.comm = require '../../comm'
-cnv = comm.Conversions
-_.extend window, cnv
-# TODO: Okay, this is a DEBUG MODE just for
-#  the physical sim portion. These eachticks
-#  should be for the game world, not physsimworld
-#
+# debug view for the physical simulation
+# HERP DERP ... reading the box2d code, there's a
+#  debugDraw function in there already
+# HERP DERP DERPITY.
+# okay, let's move towards our own entities ...
 w.ourcanvas = document.getElementById "cworld"
 w.ctx = ourcanvas.getContext '2d'
 [ourwidth,ourheight] = [ourcanvas.width-0, ourcanvas.height-0]
@@ -30,46 +28,55 @@ each_body = ( body )->
   b = body
 
   fl = body.GetFixtureList()
-  if fl
-    pos = body.GetPosition()
-    shape = fl.GetShape()
-    shapeType = fl.GetType()
-    flipy = ourheight - pos.y
+  return unless fl
 
-    if shapeType is Box2D.b2Shape.e_circleShape
+  pos = body.GetPosition()
+  shape = fl.GetShape()
+  shapeType = fl.GetType()
+  flipy = ourheight - pos.y
 
-      # draw circle
-      #
-      radius = 12
-      ctx.strokeStyle = "#CCCCCC";
-      ctx.fillStyle = "#FF8800";
-      ctx.beginPath();
-      ctx.arc(pos.x,flipy,shape.GetRadius(),0,Math.PI*2,true);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fill();
-    else if shapeType is Box2D.b2Shape.e_polygonShape
-      vert = shape.GetVertices();
-      ctx.beginPath();
+  if shapeType is Box2D.b2Shape.e_circleShape
 
-      # Handle the possible rotation of the polygon and draw it
-      b2Math.MulMV(b.m_xf.R,vert[0]);
-      tV = b2Math.AddVV(pos, b2Math.MulMV(b.m_xf.R, vert[0]));
-      ctx.moveTo(tV.x, ourheight-tV.y);
-      for i in [0..vert.length-1]
-        v = b2Math.AddVV(pos, b2Math.MulMV(b.m_xf.R, vert[i]));
-        ctx.lineTo(v.x, ourheight - v.y);
+    radius = 12
+    ctx.strokeStyle = "#CCCCCC"
+    ctx.fillStyle = "#FF8800"
+    ctx.beginPath( )
+    ctx.arc(pos.x,flipy,shape.GetRadius(),0,Math.PI*2,true);
+    ctx.closePath( )
+    ctx.stroke( )
+    ctx.fill( )
+  else if shapeType is Box2D.b2Shape.e_polygonShape
+    vert = shape.GetVertices()
+    ctx.beginPath( )
 
-      ctx.lineTo(tV.x, ourheight - tV.y);
-      ctx.closePath();
-      ctx.strokeStyle = "#CCCCCC";
-      ctx.fillStyle = "#88FFAA";
-      ctx.stroke();
-      ctx.fill();
+    # Handle the possible rotation of the polygon and draw it
+    #b2Math.MulMV(b.m_xf.R,vert[0]);
+    tV = b2Math.AddVV(pos, b2Math.MulMV(b.m_xf.R, vert[0]));
+    ctx.moveTo(tV.x, ourheight-tV.y)
+    for i in [0..vert.length-1]
+      v = b2Math.AddVV( pos, b2Math.MulMV(b.m_xf.R, vert[i]) );
+      ctx.lineTo( v.x, ourheight - v.y )
+
+    ctx.lineTo( tV.x, ourheight - tV.y )
+    ctx.closePath()
+    ctx.strokeStyle = "#CCCCCC"
+    ctx.fillStyle = "#88FFAA"
+    ctx.stroke()
+    ctx.fill()
 
 w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
+{int_args, int_list} = game.coders
+
+_.extend game.api_definitions.clientListens,
+  balls: (s)->
+    console.log "CUSTOM" + s
+  gameState: (s)->
+
+game.api_setup()
 
 gameApi = game.api
+
+
 gameWorld = game.world
 
 gameApi.setClient( socket )

@@ -45,9 +45,9 @@ class lib.PhysicalSimulation
     timeStep = 1.0 / 30.0
     iters = 10
 
-    #for i in [0..60]
+
     @forever = =>
-      @world.Step(1 / 60, 10, 10)
+      @world.Step(1 / 60, 10, 10) for i in [0..4]
       @each_tick( @world ) if @each_tick
       if @each_body
         _most( @world.GetBodyList(), 'm_next', @each_body )
@@ -80,8 +80,6 @@ class lib.PhysicalSimulation
 
 class lib.Player extends Backbone.Model
   constructor: (@name)->
-  some_action: (intAmount )=>
-    console.log "OMG CALLED ----- #{[ intAmount ]}"
 
 class lib.EventUnpacker
 class lib.World
@@ -100,35 +98,40 @@ class lib.World
 class lib.Game
   # hold World, TinySocketApi
   {int_args, int_list} = Coders
+  coders: Coders
+
+  api_definitions:
+    serverListens:
+      playerAction:
+        int_args 2, (val...)->
+          console.log "PLAYER ACTION ________ OMG OMG #{ val }"
+    clientListens:
+      gameState:
+        int_list 2, (s...)->
+          console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+        # adding this DUPLICATES the call.
+      gameState2:
+        int_args 2, (s...)->
+          console.log "GAME STATE _____ OMG OMG OMG #{ s }"
+        # adding this DUPLICATES the call.
+      balls2: (s)->
+        console.log s
+      balls: (s)->
+        console.log s
+      list:
+        int_list 5, (val)->
+          console.log "WHOA LISTY LISTISH LISTERINE!!!!"
+          console.log val
 
   constructor: (cbs, args...)->
     # client/server should pass in listeners that they
     #  want to override.
+    unbound = (val...)-> console.log ["UNBOUND:", val]
 
     @world = new lib.World args...
-    @api = new TinySocketApi
-      serverListens:
-        playerAction:
-          int_args 2, (val...)->
-            console.log "PLAYER ACTION ________ OMG OMG #{ val }"
-      clientListens:
-        gameState:
-          int_args 2, (s...)->
-            console.log "GAME STATE _____ OMG OMG OMG #{ s }"
-          # adding this DUPLICATES the call.
-        gameState2:
-          int_args 2, (s...)->
-            console.log "GAME STATE _____ OMG OMG OMG #{ s }"
-          # adding this DUPLICATES the call.
-        balls2: (s)->
-          console.log s
-        balls: (s)->
-          console.log s
-        list:
-          int_list 5, (val)->
-            console.log "WHOA LISTY LISTISH LISTERINE!!!!"
-            console.log val
 
+  api_setup: =>
+    @api = new TinySocketApi @api_definitions
 
 
 
