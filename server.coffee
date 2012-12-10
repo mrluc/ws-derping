@@ -55,23 +55,22 @@ world = game.world
 puts = (s)->console.log s
 io.sockets.on 'connection', (socket) ->
 
+  # DELETE
   u = world.players[ socket.id ] = { userActions: [], state: {} }
 
   gameApi.setServer( socket )
   socket.gameState [5*i] for i in [1..12]
-  socket.balls "HEY MAN WHAT'S UP"
+  # socket.balls "HEY MAN WHAT'S UP THIS IS STRINGYSTRING"
 
-  nums = (parseInt( Math.random()*92*92*92*92*90 ) for i in [0..5])
-  snums = JSON.stringify nums
-  socket.list nums
-  socket.balls snums
-  socket.emit "pos", nums
-
-  socket.on 'pa', (data)->
-    puts "Yaaaargh I consume player action, #{data}!"
+  # nums = (parseInt( *92*92*92*92*90 ) for i in [0..5])
+  # snums = JSON.stringify nums
+  # socket.list nums
+  # socket.balls snums
+  # socket.emit "pos", nums
 
   socket.on 'from_client', (data) -> console.log(data)
   socket.on 'disconnect', ->
+    # DELETE/REPLACE
     delete world.players[socket.id]
 
 server.listen 4001

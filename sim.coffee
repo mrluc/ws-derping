@@ -102,13 +102,8 @@ class lib.Game
   # hold World, TinySocketApi
   {int_args, int_list} = Coders
   constructor: (cbs, args...)->
-    # ONE OTHER POSSIBILITY:
-    #  set up a dispatcher fn that all are bound to,
-    #  then their callbacks are used if they have one
-
-    # huh ... again, starting too soon on this
-    #   ... but at least move the defs from comm
-    #   into here.
+    # client/server should pass in listeners that they
+    #  want to override.
     @world = new lib.World args...
     @api = new TinySocketApi
       serverListens:
