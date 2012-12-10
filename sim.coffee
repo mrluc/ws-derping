@@ -84,7 +84,6 @@ class lib.Player extends Backbone.Model
     console.log "OMG CALLED ----- #{[ intAmount ]}"
 
 class lib.EventUnpacker
-class lib.WorldEventParser
 class lib.World
   # The each_tick should be for GAME objects, not just
   #  physical bodies ...
@@ -101,9 +100,11 @@ class lib.World
 class lib.Game
   # hold World, TinySocketApi
   {int_args, int_list} = Coders
+
   constructor: (cbs, args...)->
     # client/server should pass in listeners that they
     #  want to override.
+
     @world = new lib.World args...
     @api = new TinySocketApi
       serverListens:

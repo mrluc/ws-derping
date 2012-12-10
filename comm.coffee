@@ -227,30 +227,6 @@ class Coders extends Module
 
 {int_list, int_args} = Coders
 
-#exports.gameApi = new TinySocketApi
-#  serverListens:
-#    playerAction:
-#      int_args 2, (val...)->
-#        console.log "PLAYER ACTION ________ OMG OMG #{ val }"#
-#
-#  clientListens:
-#    gameState:
-#      int_args 2, (s...)->
-#        console.log "GAME STATE _____ OMG OMG OMG #{ s }"
-#      # adding this DUPLICATES the call.
-#    gameState2:
-#      int_args 2, (s...)->
-#        console.log "GAME STATE _____ OMG OMG OMG #{ s }"
-#      # adding this DUPLICATES the call.
-#    balls2: (s)->
-#      console.log s
-#    balls: (s)->
-#      console.log s
-#    list:
-#      int_list 5, (val)->
-#        console.log "WHOA LISTY LISTISH LISTERINE!!!!"
-#        console.log val
-
 # todo - private; no need to use externally right?
 exports.Coders = Coders
 exports.Conversions = Conversions

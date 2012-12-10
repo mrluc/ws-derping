@@ -1,27 +1,16 @@
 ## SCRATCH FILE FOR NOW
 # Using this to sketch around:
-
 w = window
 puts = (args...) -> console.log args...
 
 w.bases = require 'bases'
 w._ = _ = require 'underscore'
-w.Backbone = require 'backbone'
 w.socket = io.connect 'http://localhost:4001'
 w.hammer = require './hammer'
 
 window.comm = require '../../comm'
 cnv = comm.Conversions
 _.extend window, cnv
-
-everyNs = (seconds, fn)-> _.debounce fn, seconds*1000
-every5s = (fn)-> everyNs 5, fn
-log5s = every5s (s)-> console.log s
-log5s = _.debounce ((s)-> console.log s), 5000
-
-# our tinySocketApi
-#w.gameApi = comm.gameApi
-
 # TODO: Okay, this is a DEBUG MODE just for
 #  the physical sim portion. These eachticks
 #  should be for the game world, not physsimworld
@@ -32,7 +21,7 @@ w.ctx = ourcanvas.getContext '2d'
 
 sim = require '../../sim'
 w.Box2D = sim.Box2D
-
+_.extend w, Box2D
 each_tick = (world)->
   ctx.clearRect(0,0,ourwidth,ourheight)
 
@@ -59,13 +48,12 @@ each_body = ( body )->
       ctx.closePath();
       ctx.stroke();
       ctx.fill();
-    else if shapeType is b2Shape.e_polygonShape
+    else if shapeType is Box2D.b2Shape.e_polygonShape
       vert = shape.GetVertices();
       ctx.beginPath();
 
       # Handle the possible rotation of the polygon and draw it
       b2Math.MulMV(b.m_xf.R,vert[0]);
-
       tV = b2Math.AddVV(pos, b2Math.MulMV(b.m_xf.R, vert[0]));
       ctx.moveTo(tV.x, ourheight-tV.y);
       for i in [0..vert.length-1]
@@ -90,53 +78,3 @@ gameApi.setClient( socket )
 socket.playerAction [5]
 
 console.log gameWorld
-
-
-
-# JANKY OLD DEMO FOR LEARNING
-# this: just for the janky old demo that loads later in the
-#  page. We need it around to take apart things, like the
-#  vertex api for shapes, etc.
-_.extend window, Box2D
-
-# recurring would be prettier, but it's a circular
-#  linked list, so meh
-_most = (original, key, fn) ->
-  [cur, next] = [original, no]
-  while cur
-    fn cur
-    next = cur[key]
-    break if not next or next is original # could still recur
-    cur = next
-
-each_sim_tick = ->
-  #bodies = world.GetBodyList()
-  #_most bodies, 'm_next', (o)->
-  #  console.log o
-
-nows = Date.now()
-keepGoing = ->
-  (Date.now() - nows) < 1000
-  yes
-
-ticks=0
-w.update2 = ->
-  ticks += 1
-  # very primitive ... we want it to execute regardless of draw
-  # speed.
-  world.Step(1 / 60, 10, 10)
-  context.clearRect(0,0,canvaswidth,canvasheight);
-  world.ClearForces();
-
-  # these fns all exist in the old demo
-  processObjects()
-
-  if keepGoing()
-    each_sim_tick()
-    M = Math.random();
-    if (M < .01)
-      # addImageCircle();
-    else if (M < .04)
-      # addTriangle()
-    else if (M > .99)
-      addCircle()
