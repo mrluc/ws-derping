@@ -161,10 +161,12 @@ class TinySocketApi extends Module
 
       fn = @sender sock, evt
 
+      # wrap it with a function that encodes the
+      #  args if encoders are attached to the fn.
       sock[ fname ] = if cb.args_encoders
         puts "Setting up #{ fname }"
         puts "------------- hey encoders are", cb.args_encoders
-        # AHA, I think that this could be interfering
+
         PackedCalls.unpacker cb.args_encoders..., fn
       else
         fn
@@ -216,12 +218,13 @@ class Coders extends Module
 {int_list, int_args} = Coders
 
 # todo - private; no need to use externally right?
-exports.Coders = Coders
+
+exports.PackedCalls = PackedCalls
 exports.Conversions = Conversions
 exports.Alphabet = Alphabet
 
 # public
-exports.PackedCalls = PackedCalls
+exports.Coders = Coders
 exports.TinySocketApi = TinySocketApi
 
 

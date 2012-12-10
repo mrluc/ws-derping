@@ -12,7 +12,7 @@ w.hammer = require './hammer'
 # HERP DERP ... reading the box2d code, there's a
 #  debugDraw function in there already
 # HERP DERP DERPITY.
-# okay, let's move towards our own entities ...
+# okay, let's move towards
 w.ourcanvas = document.getElementById "cworld"
 w.ctx = ourcanvas.getContext '2d'
 [ourwidth,ourheight] = [ourcanvas.width-0, ourcanvas.height-0]
@@ -67,10 +67,10 @@ each_body = ( body )->
 w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
 {int_args, int_list} = game.coders
 
-_.extend game.api_definitions.clientListens,
-  balls: (s)->
-    console.log "CUSTOM" + s
-  gameState: (s)->
+#_.extend game.api_definitions.clientListens,
+#  balls: (s)->
+#    console.log "CUSTOM" + s
+#  gameState: (s)->
 
 game.api_setup()
 

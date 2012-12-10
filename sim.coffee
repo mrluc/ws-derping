@@ -95,6 +95,34 @@ class lib.World
     @player = new lib.Player
     @players = {} #by id, probably same/derived ws id as well
 
+# GAAAAAAAAH WHAT A HACK!@ KILL IT KILL IT KILL IT!
+#
+# GAAAAAAAAAAAAAAH!!!!!!
+class CompilingApiCall
+  constructor: (@maker, @args...)->
+    return unless @args
+    unless @isready()
+      if @args? and @args.length > 0
+        @args.push (val...)-> console.log ["UNBOUND:", val]
+
+  isready: =>
+    _.isFunction( _.last( @args )) or @args.length is 0
+  fn: (fn)=>
+    if @isready()
+      @args[ @args.length-1 ] = fn
+    else
+      @args.push fn
+  compile: =>
+    console.log [@maker, @args...]
+    if @args and @args.length > 0
+      result = @maker @args...
+    else result = @maker
+
+    console.log "We settled on", result
+    result
+  dbg: =>
+    console.log @
+
 class lib.Game
   # hold World, TinySocketApi
   {int_args, int_list} = Coders
@@ -103,23 +131,21 @@ class lib.Game
   api_definitions:
     serverListens:
       playerAction:
-        int_args 2, (val...)->
+        new CompilingApiCall int_args, 2, (val...)->
           console.log "PLAYER ACTION ________ OMG OMG #{ val }"
     clientListens:
       gameState:
-        int_list 2, (s...)->
+        new CompilingApiCall int_list, 2, (s...)->
           console.log "GAME STATE _____ OMG OMG OMG #{ s }"
-        # adding this DUPLICATES the call.
-      gameState2:
-        int_args 2, (s...)->
-          console.log "GAME STATE _____ OMG OMG OMG #{ s }"
-        # adding this DUPLICATES the call.
-      balls2: (s)->
-        console.log s
-      balls: (s)->
-        console.log s
+
+      balls2:
+        new CompilingApiCall (s)->
+          console.log s
+      balls:
+        new CompilingApiCall (s)->
+          console.log s
       list:
-        int_list 5, (val)->
+        new CompilingApiCall int_list, 5, (val)->
           console.log "WHOA LISTY LISTISH LISTERINE!!!!"
           console.log val
 
@@ -131,6 +157,16 @@ class lib.Game
     @world = new lib.World args...
 
   api_setup: =>
+    console.log "------- --------"
+    for k, hash of @api_definitions
+      for fname, cfn of hash
+        console.log "fname: #{fname}"
+        #console.log cfn
+        #console.log
+        #console.log ["compiled:", (comp = cfn.compile())]
+        comp = cfn.compile()
+        hash[ fname ] = comp
+
     @api = new TinySocketApi @api_definitions
 
 
