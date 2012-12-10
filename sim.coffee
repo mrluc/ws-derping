@@ -47,7 +47,7 @@ class lib.PhysicalSimulation
 
 
     @forever = =>
-      @world.Step(1 / 60, 10, 10) for i in [0..4]
+      @world.Step(1 / 60, 10, 10)
       @each_tick( @world ) if @each_tick
       if @each_body
         _most( @world.GetBodyList(), 'm_next', @each_body )
@@ -95,30 +95,30 @@ class lib.World
     @player = new lib.Player
     @players = {} #by id, probably same/derived ws id as well
 
-# GAAAAAAAAH WHAT A HACK!@ KILL IT KILL IT KILL IT!
-#
-# GAAAAAAAAAAAAAAH!!!!!!
+# (I'm so sorry)
 class CompilingApiCall
   constructor: (@maker, @args...)->
     return unless @args
     unless @isready()
-      if @args? and @args.length > 0
+      if @args? and not @isdumb()
         @args.push (val...)-> console.log ["UNBOUND:", val]
 
+  isdumb: =>
+    @maker and @args.length is 0
   isready: =>
     _.isFunction( _.last( @args )) or @args.length is 0
   fn: (fn)=>
-    if @isready()
+    if @isdumb()
+      @maker = fn
+    else if @isready()
       @args[ @args.length-1 ] = fn
     else
       @args.push fn
   compile: =>
-    console.log [@maker, @args...]
-    if @args and @args.length > 0
+    if @isdumb()
+      result = @maker
+    else
       result = @maker @args...
-    else result = @maker
-
-    console.log "We settled on", result
     result
   dbg: =>
     console.log @

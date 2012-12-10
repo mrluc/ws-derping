@@ -75,8 +75,6 @@ w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
 game.api_setup()
 
 gameApi = game.api
-
-
 gameWorld = game.world
 
 gameApi.setClient( socket )
