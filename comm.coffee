@@ -160,23 +160,20 @@ class TinySocketApi extends Module
       evt = api.findParallelKey fname, api.named, api.tiny
 
       fn = @sender sock, evt
-
-      # wrap it with a function that encodes the
-      #  args if encoders are attached to the fn.
-      sock[ fname ] = if cb.has_encoder
-        puts "Setting up #{ fname }"
-        puts "------------- hey encoders are", cb.args_encoders
-        cb.make_encoder( fn )
-      else
-        fn
+      fn = cb.make_encoder( fn ) if cb.has_encoder
+      sock[ fname ] = fn
 
   setListeners: (sock, api)->
     @receiver( sock, evt, cb ) for evt, cb of api.tiny
 
   dispatchify: (sock)->
-    sock.dispatch_table = {}
+    tbl = sock.dispatch_table = {}
     sock.dispatch_message = (s)->
-      sock.dispatch_table[ s?[0] ] s[1..]
+      k=s?[0]
+      if tbl[ k ]
+        tbl[ k ] s[1..]
+      else
+        console.log "COULDN'T DISPATCH: #{ k }"
     sock.on 'message', sock.dispatch_message
   setServer: (sock)=>
     @dispatchify sock
