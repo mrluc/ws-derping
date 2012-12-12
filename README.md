@@ -1,14 +1,81 @@
 
-
+Websocket Derping
 ===
 
 A project to keep me sane until I'm back in Ecuador.
 
-Node.js, Box2D, okay. Interesting enough.
-
-Plus, connect-assets (meh, phased out in favor of
+Node.js, Box2D, okay. Interesting enough. Going to add hammer.js
+too, poke around, get dirty and learn a lot. Plus, connect-assets (meh, phased out in favor of
 browserify and build script for coffeescript), and node-sass - yay for
 good speed and designer familiarity.
+
+Interesting Stuff
+===
+
+
+### Using Every Part of the Websocket Frame Buffalo
+
+The Websockets standard is UTF-8, and people use it to send 
+JSON. Socket.io uses json by default when you use `.on()` 
+or `.emit()`, creating frames that look like
+
+    5:::{"name":"myFn","args":[[1234,89352,123,392]]}
+
+That's not optimal, but it doesn't need to be - the speed 
+gain of websocket-versus-polling is so great that
+optimizing the actual frames would be a waste of time for
+lots of applications, especially since frames are often gzipped.
+
+(Although for more general single-page-app projects, you're
+probably already using something like backbone.js, and you
+could just drop websockets in as a transport and get a nice speed boost).
+
+But for some kinds of real-time, like multiplayer games, it makes
+sense to have one really efficient channel to send updates along --
+like player positions each tick.
+
+You could just use `.send()` from the websockets standard, which
+socket.io also provides, and send a delimited string
+of updates -- for instance, two x/y pairs might be:
+
+    3:::myFn[1234,89352,123,392]
+
+That's clearly more efficient.
+
+If you do that, you need to provide your own dispatch table - 
+your own implementation of the `"name":"myFn"` part of the 
+socket.io approach. A little logic, no big.
+
+But there are still two sources of inefficiency:
+
+- The function name. `myFn` is 4 bytes and it's not very 
+  meaningful.
+  
+- The contents are base-10 numbers written in a base-255 
+  medium: utf-8.
+  
+So that's what I played around with!
+
+`TinySocketApi` (built on `CompressedKeys`) takes care 
+of the first part, and the a host of conversion, 
+rpc and other little helpers (`CompilingApiCall`,
+`PackedCall`,`Coder`,`Conversions`,`Alphabet`) take 
+care of the second.
+
+None of this is necessary, but it's been fun - and now we can
+do 
+
+    # server example
+    socket.gameState [parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
+
+And the message produced will be
+
+    3:::1`6~-Y`Z~
+
+Instead of ex:
+
+    3:::'gameState',106,24,8464,8556
+
 
 
 archi

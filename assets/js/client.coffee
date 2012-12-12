@@ -9,11 +9,27 @@ w.socket = io.connect 'http://localhost:4001'
 w.Hammer = require './hammer'
 hammer = new Hammer document.getElementById( "draggy" )
 
-hammer.onrelease = (ev)->
+# just messin'
+starty = no
+hammer.onrelease_fn = (ev)->
   console.log "release"
+  console.log ev
+  console.log [starty, ev.position]
+  hammer.setOnRelease()
+  starty = no
+hammer.onrelease = _.debounce hammer.onrelease_fn, 100
+hammer.setOnRelease = ->
+  hammer.onrelease = _.debounce hammer.onrelease_fn, 100
+releaseOnce = ->
+  _.once hammer.onrelease
 hammer.ondrag = (ev) ->
+  starty = ev.position unless starty
+  unless starty
+    hammer.setOnRelease()
+    hammer.onrelease = releaseOnce()
   console.log "drag"
 
+socket.send JSON.stringify [1234,89352,123,392]
 # debug view for the physical simulation
 # HERP DERP ... reading the box2d code, there's a
 #  debugDraw function in there already
@@ -31,7 +47,6 @@ each_tick = (world)->
   ctx.clearRect(0,0,ourwidth,ourheight)
 
 each_body = ( body )->
-  # console.log
   b = body
 
   fl = body.GetFixtureList()
