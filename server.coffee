@@ -51,15 +51,21 @@ gameApi = game.api
 world = game.world
 
 puts = (s)->console.log s
+plid=0
+
+gameState = ->
+
 io.sockets.on 'connection', (socket) ->
 
   # REPLACE
-  u = world.players[ socket.id ] = { userActions: [], state: {} }
+  u = world.players[ socket.id ] = new sim.Player "client#{plid+=1}", socket
 
   gameApi.setServer( socket )
 
-
-  setInterval (->
+  console.log io.sockets
+  derp = setInterval (->
+    # we should have one interval that runs along all of the sockets
+    #  and does this, ie not one-per.
     pos = world.sim.body.GetPosition()
     console.log pos.x, pos.y
     socket.gameState [parseInt(pos.x), parseInt(pos.y)]
@@ -70,5 +76,6 @@ io.sockets.on 'connection', (socket) ->
   socket.on 'disconnect', ->
     # REPLACE
     delete world.players[socket.id]
+    clearInterval derp
 
 server.listen 4001

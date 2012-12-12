@@ -163,11 +163,10 @@ class TinySocketApi extends Module
 
       # wrap it with a function that encodes the
       #  args if encoders are attached to the fn.
-      sock[ fname ] = if cb.args_encoders
+      sock[ fname ] = if cb.has_encoder
         puts "Setting up #{ fname }"
         puts "------------- hey encoders are", cb.args_encoders
-
-        PackedCalls.unpacker cb.args_encoders..., fn
+        cb.make_encoder( fn )
       else
         fn
 
@@ -193,6 +192,7 @@ pc  = PackedCalls
 cnv = Conversions
 
 class Coders extends Module
+  # todo: okay, about time for instances
   @define_coder = (triplets, fn)->
     encargs = []
     decargs = []
@@ -204,9 +204,12 @@ class Coders extends Module
     decoder = pc.unpacker decargs..., fn
 
     # TODO then the emitter would use in setEmitters
+    decoder.has_encoder = yes
     decoder.args_encoders = encargs
+    decoder.make_encoder = (fn)->
+      pc.unpacker encargs..., fn
     decoder
-  #@define_coder = define_coder
+
   @int_list = (bytes, fn)=>
     @define_coder [[pc.a2s, pc.s2a, bytes]], fn
   @int_args = (arg_bytes..., fn)=>
