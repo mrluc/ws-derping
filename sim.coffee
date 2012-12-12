@@ -128,6 +128,8 @@ class lib.Game
   {int_args, int_list} = Coders
   coders: Coders
 
+  # this is what we'll be overriding on clie/serv, I guess via the
+  #  methods of CompilingApiCall if we decide it can stick around
   api_definitions:
     serverListens:
       playerAction:

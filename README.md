@@ -8,7 +8,7 @@ Node.js, Box2D, okay. Interesting enough.
 
 Plus, connect-assets (meh, phased out in favor of
 browserify and build script for coffeescript), and node-sass - yay for
-awesome speed and designer familiarity.
+good speed and designer familiarity.
 
 
 archi
@@ -22,7 +22,7 @@ precompiled AND dynamic ... I don't honestly see a great reason,
 unless they're prohibitively slow.
 
 The foolproof way of doing this all is
-to recompile everything. Just have a build script and some
+to recompile everything. A build script and some
 kind of watch script.
 
 - Using [node-watch](https://npmjs.org/package/node-watch) maybe?
@@ -46,3 +46,11 @@ Let's just do a 'watch-everything, recompile-everything' approach.
          tried, works
  -  [?]  browserify all of it
          TODO try this!!!!
+
+Okay -- we went with browserify. The watch-everything,
+compile-everything approach makes sense - but golly, 
+if node-sass and browserify aren't enough for you, maybe
+you should be using a 'real framework', whatever that is.
+
+That's hot. Using the same modules+require process on client
+and server makes me very hot. I need some air.
