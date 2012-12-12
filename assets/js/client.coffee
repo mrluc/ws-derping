@@ -6,13 +6,20 @@ puts = (args...) -> console.log args...
 w.bases = require 'bases'
 w._ = require 'underscore'
 w.socket = io.connect 'http://localhost:4001'
-w.hammer = require './hammer'
+w.Hammer = require './hammer'
+hammer = new Hammer document.getElementById( "draggy" )
+
+hammer.onrelease = (ev)->
+  console.log "release"
+hammer.ondrag = (ev) ->
+  console.log "drag"
 
 # debug view for the physical simulation
 # HERP DERP ... reading the box2d code, there's a
 #  debugDraw function in there already
 # HERP DERP DERPITY.
-# okay, let's move towards
+# okay, let's move towards a dom renderer -- that
+#  seems really fun.
 w.ourcanvas = document.getElementById "cworld"
 w.ctx = ourcanvas.getContext '2d'
 [ourwidth,ourheight] = [ourcanvas.width-0, ourcanvas.height-0]
@@ -66,11 +73,12 @@ each_body = ( body )->
 
 w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
 {int_args, int_list} = game.coders
+{gameState, balls, list} = game.api_definitions.clientListens
 
-#_.extend game.api_definitions.clientListens,
-#  balls: (s)->
-#    console.log "CUSTOM" + s
-#  gameState: (s)->
+# OMGEEZY, it r xtenzible
+gameState.fn (s)-> # hesh!
+balls.fn (s)->
+  console.log "CUSTOM EXTENSIBLE OMGEEZY: #{ s }"
 
 game.api_setup()
 

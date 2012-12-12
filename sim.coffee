@@ -52,8 +52,6 @@ class lib.PhysicalSimulation
       if @each_body
         _most( @world.GetBodyList(), 'm_next', @each_body )
     setInterval @forever, 50 # 20fps
-    # TODO: class this for node/browser
-    #z = setInterval(eachStep, timeStep);
 
   addCircle: =>
     bodyDef = new b.b2BodyDef;
@@ -78,8 +76,9 @@ class lib.PhysicalSimulation
     console.log b
     b
 
-class lib.Player extends Backbone.Model
-  constructor: (@name)->
+class lib.Player  # extends Backbone.Model
+  constructor: (@name, @socket)->
+
 
 class lib.EventUnpacker
 class lib.World
