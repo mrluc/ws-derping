@@ -56,8 +56,26 @@ But there are still two sources of inefficiency:
   
 So that's what I played around with!
 
-`TinySocketApi` takes care of the first part, and the a host of 
-conversion, rpc and other little helpers take care of the second.
+`TinySocketApi` (built on `CompressedKeys`) takes care 
+of the first part, and the a host of conversion, 
+rpc and other little helpers (`CompilingApiCall`,
+`PackedCall`,`Coder`,`Conversions`,`Alphabet`) take 
+care of the second.
+
+None of this is necessary, but it's been fun - and now we can
+do 
+
+    # server example
+    socket.gameState [parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
+
+And the message produced will be
+
+    3:::1`6~-Y`Z~
+
+Instead of ex:
+
+    3:::'gameState',106,24,8464,8556
+
 
 
 archi

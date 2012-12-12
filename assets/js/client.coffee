@@ -9,6 +9,7 @@ w.socket = io.connect 'http://localhost:4001'
 w.Hammer = require './hammer'
 hammer = new Hammer document.getElementById( "draggy" )
 
+# just messin'
 starty = no
 hammer.onrelease_fn = (ev)->
   console.log "release"

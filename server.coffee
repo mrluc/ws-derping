@@ -51,7 +51,7 @@ gameApi = game.api
 world = game.world
 
 puts = (s)->console.log s
-plid=0
+plid = 0
 
 gameState = ->
 
@@ -68,7 +68,8 @@ io.sockets.on 'connection', (socket) ->
     #  and does this, ie not one-per.
     pos = world.sim.body.GetPosition()
     console.log pos.x, pos.y
-    socket.gameState [parseInt(pos.x), parseInt(pos.y)]
+    socket.send ['gameState',parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
+    socket.gameState [parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
   ), 1000
 
   setInterval (-> socket.balls "Hey man"), 10000
