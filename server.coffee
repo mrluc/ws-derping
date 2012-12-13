@@ -68,7 +68,7 @@ io.sockets.on 'connection', (socket) ->
     #  and does this, ie not one-per.
     pos = world.sim.body.GetPosition()
     console.log pos.x, pos.y
-    socket.send ['gameState',parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
+    #socket.send ['gameState',parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
     socket.gameState [parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
   ), 1000
 

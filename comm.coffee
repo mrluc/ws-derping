@@ -55,7 +55,8 @@ class Conversions extends Module
 
 # Compressed <-> Verbose hash keys
 #   give it a hash with descriptively named keys and it'll
-#   encode them.
+#   make @named and @tiny hashes referencing
+#   the same values.
 class CompressedKeys extends Module
   # TODO: the keys for these need to be unique across all
   #  instances.
@@ -80,7 +81,7 @@ class CompressedKeys extends Module
 
 
 class PackedCalls extends Module
-  @cnv = exports.Conversions
+  cnv = Conversions
   @unpacker = (argConsumers..., fnToCallWithArgs = puts)->
     (s)->
       args=[]
@@ -98,23 +99,20 @@ class PackedCalls extends Module
     (s)->
       val = []
       for i in [0..(s.length-1)] by bytes
-        val.push Conversions.to_i( s[i..(i+bytes-1)], bytes )
+        val.push cnv.to_i( s[i...(i+bytes)], bytes )
       [ val, []]
   @a2s = (bytes)->
     (rest)->
       total=""
-      total+= Conversions.to_s( i, bytes ) for i in rest
+      total+= cnv.to_s( i, bytes ) for i in rest
       [ total, []]
+
   @s2i = (bytes)->
     (s)->
-      chars = s.slice 0, bytes
-      val = Conversions.to_i chars
-      rest = s.slice bytes, s.length
-      [ val, rest ]
-
+       [ cnv.to_i( s[0...bytes] ), s[bytes..] ]
   @i2s = (bytes)->
     (rest)->
-      val = Conversions.to_s rest.shift(), bytes
+      val = cnv.to_s rest.shift(), bytes
       [ val, rest ]
 
 class TinySocketApi extends Module

@@ -1,3 +1,20 @@
+# We've spent sooo much time on ws (and there's
+#  lots left) modelling, comm modeling.
+# But now there's a sim here, it's being drawn,
+#  we have our fast channel, encode/decode,
+#  and we see how we can do interaction ... cool.
+#
+# Probably time to start working on this model,
+#  populating from a world state/map, and synching
+#  that state ...
+#
+# Yeah that'd be a good reason for some tests:
+#  start to set up the ModelWorld entities,
+#  apply updates, get the ModelWorld managing
+#  the PhysicalSim to where we know that's
+#  not too leaky,
+#  right now it's just a pass-through, a pipe.
+
 lib = {}
 _ = require 'underscore'
 ext = require './extensions'
@@ -40,18 +57,23 @@ class lib.PhysicalSimulation
     bodyDef.position.Set(@w/2, @h - 2);
     @world.CreateBody(bodyDef).CreateFixture(fixDef);
 
+    fixDef.shape.SetAsBox 2, @h
+    bodyDef.position.Set @w, 0
+    @world.CreateBody(bodyDef).CreateFixture(fixDef);
+    bodyDef.position.Set 4,0
+    @world.CreateBody(bodyDef).CreateFixture(fixDef);
+
     @body = @addCircle()
 
-    timeStep = 1.0 / 30.0
+    timeStep = 1.0 / 60.0
     iters = 10
 
-
     @forever = =>
-      @world.Step(1 / 60, 10, 10)
+      @world.Step(1 / 60, 10, 10) for i in [1..6]
       @each_tick( @world ) if @each_tick
       if @each_body
         _most( @world.GetBodyList(), 'm_next', @each_body )
-    setInterval @forever, 50 # 20fps
+    setInterval @forever, parseInt(timeStep * 1000)
 
   addCircle: =>
     bodyDef = new b.b2BodyDef;
@@ -64,13 +86,11 @@ class lib.PhysicalSimulation
     bodyDef.type = b.b2Body.b2_dynamicBody;
     scale = Math.random() * 40;
 
-    fixDef.shape = new b.b2CircleShape(
-      scale * Math.random()
-    );
-    bodyDef.position.x = (@w - scale*2)*Math.random() + scale * 2;
-    bodyDef.position.y = @h - (scale * Math.random() + scale * 2);
-    b = @world.CreateBody(bodyDef)
-    f = b.CreateFixture(fixDef);
+    fixDef.shape = new b.b2CircleShape(scale * Math.random())
+    bodyDef.position.x = (@w - scale*2)*Math.random() + scale * 2
+    bodyDef.position.y = @h - (scale * Math.random() + scale * 2)
+    b = @world.CreateBody bodyDef
+    f = b.CreateFixture fixDef
 
     console.log "-----"
     console.log b
@@ -133,7 +153,7 @@ class lib.Game
     serverListens:
       playerAction:
         new CompilingApiCall int_args, 2, (val...)->
-          console.log "PLAYER ACTION ________ OMG OMG #{ val }"
+          console.log "PLAYER ACTION ____ OMG OMG #{ val }"
     clientListens:
       gameState:
         new CompilingApiCall int_list, 2, (s...)->
@@ -158,7 +178,12 @@ class lib.Game
     @world = new lib.World args...
 
   api_setup: =>
-    console.log "------- --------"
+
+    # this should be done in TinySocketApi,
+    # with a simple 'compile fn if responds_to compile'
+    # so that people can define a simple hello-world
+    # api with callbacks (maybe for tiny dispatch but
+    # full-sized msgs to start)
     for k, hash of @api_definitions
       for fname, cfn of hash
         console.log "fname: #{fname}"
