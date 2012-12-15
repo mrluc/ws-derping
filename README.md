@@ -1,4 +1,3 @@
-
 Websocket Derping
 ===
 
@@ -41,6 +40,38 @@ But for some kinds of real-time, like multiplayer games, it makes
 sense to have one channel that's really optimized for the core
 updates, like entity positions each tick.
 
+#### Isn't There A Standard Derp?
+
+Surely the standard supports some super-sweet methods of
+compression? Like JSONP? Or, hey - if you're sending numbers, 
+real binary communication?
+
+That's all coming - and it'll be great. Even IE10 supports sending
+binary data over WebSockets. And libraries like BinaryJS 
+knit together 
+the browsers that do support 'real' binar. 
+
+But BinaryJS doesn't 
+have fallbacks as of this writing. And cross-browser gzip 
+is still emerging (to detect redundancy in such small messages,
+gzip really would need to 'remember' what it's seen in prior
+frames, which would be a significant increase in implementation
+complexity for the various browsers).
+
+When BinaryJS comes with socket.io-like transport fallbacks, 
+or when [gzip like this](http://www.ietf.org/mail-archive/web/hybi/current/msg01810.html)
+is the norm in all WebSocket implementations, then far better derping
+will be available. We're probably only a year or two out from 
+widespread adoption of websockets that take ArrayBuffers and blobs
+and such. And we're surely only a few patches away from fallbacks
+in the binary websockets projects, since Socket.io has them. 
+
+But at the moment, if you want to make your frames smaller
+with the cross-browser just-works of Socket.io, you'll have to 
+make them smaller yourself.
+
+#### Custom Derps
+
 You could just use `.send()` from the websockets standard, which
 socket.io also provides, and send a delimited separated sequence
 of updates -- for instance, two x/y pairs might be:
@@ -63,12 +94,13 @@ But there are still two sources of inefficiency:
    In practice we can only use from base-58
    to base-93, and utf-8 is actually only base-128 for our 
    purposes, but any of that would be 
-   quite an improvement on base-10!
+   quite an improvement on base-10! (Oooh, and the
+   ws Quake encodes into 2-character pairs - very smart).
    
    gzip would whittle down the improvement with larger message
    bodies, but the nature of websocket frames is that they'll
    likely be smallish and frequent.
-   
+
 So that's what I played around with first! There are some classes
 sketched out around this that I'll probably extract out into 
 a little library before continuing on with my merry
@@ -97,6 +129,7 @@ Instead of, for instance:
 It's comforting to know the exact size of the messages 
 we send. We can start reasoning on what's possible, and make informed
 tradeoffs re: number of messages and their weight and number of clients.
+
 
 
 archi
