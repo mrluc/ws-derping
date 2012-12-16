@@ -80,7 +80,7 @@ io.sockets.on 'connection', (socket) ->
       send_a
     else
       dummy
-    socket.gameState sendem
+    socket.gameState [parseInt(pos.x), parseInt(pos.y)]
   ), 1000
 
   setInterval (-> socket.balls "Hey man"), 10000

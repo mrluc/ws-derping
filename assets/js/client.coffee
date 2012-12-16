@@ -15,7 +15,7 @@ w.ctx = ourcanvas.getContext '2d'
 
 # ------- debug draw --------
 # HERP DERP ... reading the box2d code, there's a
-#  debugDraw function in there already! gah.
+#  debugDraw function in there already! gah
 each_tick = (world)->
   ctx.clearRect(0,0,ourwidth,ourheight)
 each_body = ( body )->
@@ -63,7 +63,9 @@ w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
 {gameState, balls, list} = game.api_definitions.clientListens
 
 # OMGEEZY, api r xtenzible on clinet
-  gameState.fn (s)-> # hesh
+gameState.fn (s)->
+  console.log s
+
 balls.fn (s)->
   console.log "CUSTOM EXTENSIBLE OMGEEZY: #{ s }"
 
