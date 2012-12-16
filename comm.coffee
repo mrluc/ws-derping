@@ -94,7 +94,7 @@ class PackedCalls extends Module
       else
         fnToCallWithArgs( args..., rest )
 
-  # some consumers
+  # some consumers: to/from int, intarray
   @s2a = (bytes)->
     (s)->
       val = []

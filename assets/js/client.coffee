@@ -1,14 +1,8 @@
 ## SCRATCH FILE FOR NOW
-# Currently sketching around:
-#  - box2d
-#  - hammer
-#
-w = window
-puts = (args...) -> console.log args...
+# Currently sketching around: b2d, hamm
+[w, puts] = [window, (args...) -> console.log args...]
 
 w._ = require 'underscore'
-w.socket = io.connect 'http://localhost:4001'
-w.Hammer = require './hammer'
 sim = require '../../sim'
 
 w.Box2D = sim.Box2D
@@ -19,19 +13,14 @@ w.ctx = ourcanvas.getContext '2d'
 # currently passing along to PhySim
 [ourwidth,ourheight] = [ourcanvas.width-0, ourcanvas.height-0]
 
-# ---- debug draw
+# ------- debug draw --------
 # HERP DERP ... reading the box2d code, there's a
 #  debugDraw function in there already! gah.
-# let's move towards the dom renderer -- that
-#  seems really fun.
-
 each_tick = (world)->
   ctx.clearRect(0,0,ourwidth,ourheight)
 each_body = ( body )->
   b = body
-
-  fl = body.GetFixtureList()
-  return unless fl
+  return unless fl = body.GetFixtureList()
 
   pos = body.GetPosition()
   shape = fl.GetShape()
@@ -39,8 +28,6 @@ each_body = ( body )->
   flipy = ourheight - pos.y
 
   if shapeType is Box2D.b2Shape.e_circleShape
-
-    radius = 12
     ctx.strokeStyle = "#CCCCCC"
     ctx.fillStyle = "#FF8800"
     ctx.beginPath( )
@@ -53,7 +40,6 @@ each_body = ( body )->
     ctx.beginPath( )
 
     # Handle the possible rotation of the polygon and draw it
-    #b2Math.MulMV(b.m_xf.R,vert[0]);
     tV = b2Math.AddVV(pos, b2Math.MulMV(b.m_xf.R, vert[0]));
     ctx.moveTo(tV.x, ourheight-tV.y)
     for i in [0..vert.length-1]
@@ -66,28 +52,37 @@ each_body = ( body )->
     ctx.fillStyle = "#88FFAA"
     ctx.stroke()
     ctx.fill()
-# ----- end debug draw
+# -end debug draw
 
+
+# ----- API, Game, Socket Setup -----
+#
+w.socket = io.connect 'http://localhost:4001'
 w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
 {int_args, int_list} = game.coders
 {gameState, balls, list} = game.api_definitions.clientListens
 
 # OMGEEZY, api r xtenzible on clinet
-gameState.fn (s)-> # hesh!
+  gameState.fn (s)-> # hesh
 balls.fn (s)->
   console.log "CUSTOM EXTENSIBLE OMGEEZY: #{ s }"
 
+gameWorld = game.world
+
 game.api_setup()
 gameApi = game.api
-gameWorld = game.world
 gameApi.setClient( socket )
 
 # send data to server
 socket.playerAction [5]
 
+
+# ----- Interaction -----
+#
+w.Hammer = require './hammer'
 class Draggy extends Hammer
   # okay - TODO - this guy should become
-  #  home for the touch events we recognize,
+  #  home for the touch events we recognize,Yeah
   #  we need a kb events handler too, and
   #  then an InteractionWatcher
   #  that maps those to player/sim
@@ -116,8 +111,19 @@ hammer.dragline = (o,n)-> #old, new
 
 
 
-# sweet.
-  # so this is really where we'd be triggering
+
+
+
+
+
+
+
+
+
+
+
+# Notes:
+  # this is really where we'd be triggering
   #  a player action - client interaction event
   #  gets turned into a format that player actions
   #  understand. The player actions (which probably

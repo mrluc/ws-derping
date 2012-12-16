@@ -18,7 +18,7 @@
 lib = {}
 _ = require 'underscore'
 ext = require './extensions'
-comm = require './comm'
+comm = require 'ws-derp'
 {PackedCalls, TinySocketApi, Coders, Conversion} = comm
 
 Backbone = require 'backbone'
@@ -178,7 +178,6 @@ class lib.Game
     @world = new lib.World args...
 
   api_setup: =>
-
     # this should be done in TinySocketApi,
     # with a simple 'compile fn if responds_to compile'
     # so that people can define a simple hello-world

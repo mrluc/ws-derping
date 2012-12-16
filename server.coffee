@@ -40,9 +40,8 @@ app.get '/', (req, res) -> res.render 'index'
 
 # ------- GAME ---------
 #
-comm = require './comm'
+
 sim = require './sim'
-comm.test()
 
 # TODO: CLIENT LIST -- ie list of players WITH sockets.
 game = new sim.Game
@@ -53,7 +52,8 @@ world = game.world
 puts = (s)->console.log s
 plid = 0
 
-gameState = ->
+broadcaseGameState = ->
+
 
 io.sockets.on 'connection', (socket) ->
 
@@ -63,13 +63,24 @@ io.sockets.on 'connection', (socket) ->
   gameApi.setServer( socket )
 
   console.log io.sockets
+  dummy = [1234,1234,1234]
+  sendem = dummy
+  # huh, sweet, looking at packets specifically ... but gotta capture
+  #  from vps first.
+  #tcpdump -X -vvi lo0
   derp = setInterval (->
     # we should have one interval that runs along all of the sockets
     #  and does this, ie not one-per.
     pos = world.sim.body.GetPosition()
     console.log pos.x, pos.y
     #socket.send ['gameState',parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
-    socket.gameState [parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
+    send_a = [parseInt(pos.x), parseInt(pos.y), 92*92, 92*93, 92*91]
+    send_a.push( 92*91 ) for i in [0..200]
+    sendem = if sendem is dummy
+      send_a
+    else
+      dummy
+    socket.gameState sendem
   ), 1000
 
   setInterval (-> socket.balls "Hey man"), 10000
