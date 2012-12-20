@@ -17,7 +17,7 @@
 
 lib = {}
 _ = require 'underscore'
-ext = require './extensions'
+{Module} = require './extensions'
 comm = require 'ws-derp'
 {PackedCalls, TinySocketApi, Coders, Conversion} = comm
 
@@ -32,6 +32,13 @@ _most = (original, key, fn) ->
     next = cur[key]
     break if not next or next is original # could still recur
     cur = next
+lib.normalizeAngle = (angle)->
+  if angle > 360
+    angle % 360
+  else if angle < 0
+    360 - (Math.abs(angle) % 360)
+  else
+    angle
 
 class lib.PhysicalSimulation
   constructor: (@w=300, @h=150, @each_tick, @each_body) ->
@@ -92,9 +99,10 @@ class lib.PhysicalSimulation
     b = @world.CreateBody bodyDef
     f = b.CreateFixture fixDef
 
-    console.log "-----"
-    console.log b
+    # console.log "-----"
+    # console.log b
     b
+
 
 class lib.Player  # extends Backbone.Model
   constructor: (@name, @socket)->
@@ -150,18 +158,12 @@ class lib.Game
   # this is what we'll be overriding on clie/serv, I guess via the
   #  methods of CompilingApiCall if we decide it can stick around
   api_definitions:
-    serverListens:
-      playerAction:
-        new CompilingApiCall int_args, 2, (val...)->
-          console.log "PLAYER ACTION ____ OMG OMG #{ val }"
+    serverListens: {}
     clientListens:
       gameState:
         new CompilingApiCall int_list, 2, (s...)->
           console.log "GAME STATE _____ OMG OMG OMG #{ s }"
 
-      balls2:
-        new CompilingApiCall (s)->
-          console.log s
       balls:
         new CompilingApiCall (s)->
           console.log s

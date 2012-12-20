@@ -41,19 +41,30 @@ app.get '/', (req, res) -> res.render 'index'
 # ------- GAME ---------
 #
 
+puts = (s)->console.log s
 sim = require './sim'
 
 # TODO: CLIENT LIST -- ie list of players WITH sockets.
 game = new sim.Game
+
+apiConfig = game.api_definitions.serverListens
+#apiConfig.playerAction.fn (val)->
+#
+#  puts "Our server Playeraction callback"
+#  puts val
+#  puts 'this is ------------------- '
+#
+#  puts @
+
 game.api_setup()
 gameApi = game.api
+
 world = game.world
 
-puts = (s)->console.log s
+
 plid = 0
 
 broadcaseGameState = ->
-
 
 io.sockets.on 'connection', (socket) ->
 
@@ -62,7 +73,12 @@ io.sockets.on 'connection', (socket) ->
 
   gameApi.setServer( socket )
 
-  console.log io.sockets
+  socket.on 'playerAction', (vec)->
+    socket.emit 'serverMessage', "We got that update dawg. #{vec}"
+    world.sim.body.SetLinearVelocity( new sim.Box2D.b2Vec2 vec... )
+    console.log vec
+
+  # console.log io.sockets
   dummy = [1234,1234,1234]
   sendem = dummy
   # huh, sweet, looking at packets specifically ... but gotta capture
@@ -71,7 +87,12 @@ io.sockets.on 'connection', (socket) ->
   derp = setInterval (->
     # we should have one interval that runs along all of the sockets
     #  and does this, ie not one-per.
-    pos = world.sim.body.GetPosition()
+    body = world.sim.body
+    pos = body.GetPosition()
+    angle = sim.normalizeAngle body.GetAngle()
+    # this is in radians/second.
+    angular = body.GetAngularVelocity()
+
     console.log pos.x, pos.y
     #socket.send ['gameState',parseInt(pos.x), parseInt(pos.y), 92*92, 92*93]
     send_a = [parseInt(pos.x), parseInt(pos.y), 92*92, 92*93, 92*91]
@@ -84,7 +105,6 @@ io.sockets.on 'connection', (socket) ->
   ), 1000
 
   setInterval (-> socket.balls "Hey man"), 10000
-  socket.on 'from_client', (data) -> console.log(data)
   socket.on 'disconnect', ->
     # REPLACE
     delete world.players[socket.id]

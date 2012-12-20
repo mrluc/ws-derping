@@ -64,7 +64,9 @@ w.game = new sim.Game {a:1}, ourwidth, ourheight, each_tick, each_body
 
 # OMGEEZY, api r xtenzible on clinet
 gameState.fn (s)->
+  # console.log @
   console.log s
+# oh, fun.
 
 balls.fn (s)->
   console.log "CUSTOM EXTENSIBLE OMGEEZY: #{ s }"
@@ -76,8 +78,19 @@ gameApi = game.api
 gameApi.setClient( socket )
 
 # send data to server
-socket.playerAction [5]
+# socket.playerAction [5]
+# works, but until we refactor into objects that hold
+#  onto the socket instance, we'll want to
 
+socket.on 'serverMessage', puts
+
+window.normalizeAngle = (angle)->
+  if angle > 360
+    angle % 360
+  else if angle < 0
+    360 - (Math.abs(angle) % 360)
+  else
+    angle
 
 # ----- Interaction -----
 #
@@ -99,15 +112,20 @@ class Draggy extends Hammer
 
 hammer = new Draggy document.getElementById( "draggy" )
 hammer.dragline = (o,n)-> #old, new
-  [dx, dy] = [n.x-o.x, n.y-o.y]
+  dxy = [-(n.x-o.x), n.y-o.y]
   m = 1 # multiplier
-  bv = new b2Vec2( -dx * m, dy * m )
+  bv = new b2Vec2 dxy...
 
   body = gameWorld.sim.body
   puts bv
 
   # this is what we want now:
   body.SetLinearVelocity bv
+
+  # socket.playerAction [bv.x, bv.y]
+
+  socket.emit 'playerAction', [bv.x, bv.y]
+
   # this would be good for some kinds of things:
   #body.ApplyForce bv, body.GetWorldCenter()
 
